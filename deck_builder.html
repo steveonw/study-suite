@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deck Builder</title>
+<style>
+  :root {
+    --bg: #f4f4f5;
+    --card: #ffffff;
+    --muted: #71717a;
+    --muted-soft: #a1a1aa;
+    --text: #18181b;
+    --line: #e4e4e7;
+    --line-strong: #d4d4d8;
+    --soft: #fafafa;
+    --accent: #111827;
+    --accent-2: #27272a;
+    --accent-soft: #f3f4f6;
+    --selected: #1d4ed8;
+    --selected-bg: #eff6ff;
+    --selected-line: #bfdbfe;
+    --green-bg: #ecfdf5;
+    --green-text: #047857;
+    --green-line: #a7f3d0;
+    --red-bg: #fef2f2;
+    --red-text: #b91c1c;
+    --red-line: #fecaca;
+    --amber-bg: #fffbeb;
+    --amber-text: #92400e;
+    --amber-line: #fde68a;
+    --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --shadow-sm: 0 2px 6px rgba(15, 23, 42, 0.04);
+    --radius-xl: 24px;
+    --radius-lg: 18px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  button, input, select, textarea { font: inherit; color: inherit; }
+
+  /* ============ APP SHELL ============ */
+  .app {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px 24px 60px;
+  }
+
+  /* ============ TOP BAR ============ */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .topbar-title {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+  }
+  .topbar h1 {
+    margin: 0;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+  }
+  .topbar-sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .topbar-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ============ BUTTONS ============ */
+  .btn {
+    appearance: none;
+    border: 1px solid var(--line-strong);
+    background: var(--card);
+    color: var(--text);
+    border-radius: var(--radius-md);
+    padding: 9px 14px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 150ms ease;
+    white-space: nowrap;
+  }
+  .btn:hover { background: var(--soft); border-color: var(--muted-soft); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:disabled:hover { background: var(--card); border-color: var(--line-strong); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+  .btn-danger {
+    border-color: var(--red-line);
+    color: var(--red-text);
+    background: var(--card);
+  }
+  .btn-danger:hover { background: var(--red-bg); }
+
+  .btn-icon {
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+  }
+
+  .btn-add {
+    width: 100%;
+    border: 2px dashed var(--line-strong);
+    background: transparent;
+    color: var(--muted);
+    padding: 10px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+    transition: 150ms ease;
+  }
+  .btn-add:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--soft);
+  }
+
+  /* ============ DECK META BAR ============ */
+  .deck-meta {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px 18px;
+  }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .deck-meta input[type="text"] {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    transition: 120ms ease;
+  }
+  .deck-meta input[type="text"]:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  }
+  .deck-meta input.invalid {
+    border-color: var(--red-line);
+    background: var(--red-bg);
+  }
+  .deck-stats {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    color: var(--muted);
+    font-size: 13px;
+    padding-top: 4px;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
+  }
+  .deck-stats strong { color: var(--text); font-weight: 700; }
+  .deck-stats .save-status {
+    margin-left: auto;
+    font-style: italic;
+  }
+  .save-status.saved { color: var(--green-text); }
+  .save-status.unsaved { color: var(--amber-text); }
+  .save-status.error { color: var(--red-text); }
+
+  /* ============ EMPTY STATE (no deck) ============ */
+  .empty-state {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    padding: 60px 32px;
+    text-align: center;
+  }
+  .empty-state h2 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    letter-spacing: -0.02em;
+  }
+  .empty-state p {
+    color: var(--muted);
+    margin: 0 auto 24px;
+    max-width: 480px;
+  }
+  .empty-state-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .empty-state input[type="file"] {
+    display: none;
+  }
+
+  /* ============ THREE-COLUMN GRID ============ */
+  .builder {
+    display: grid;
+    grid-template-columns: 280px 320px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .pane {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .pane-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    background: var(--soft);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pane-body {
+    padding: 12px;
+    max-height: calc(100vh - 280px);
+    overflow-y: auto;
+  }
+  .pane-empty {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 24px 12px;
+    font-size: 14px;
+  }
+
+  /* ============ LIST ITEMS (categories & cards) ============ */
+  .list-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    border: 1px solid var(--line);
+    margin-bottom: 6px;
+    transition: 120ms ease;
+    overflow: hidden;
+  }
+  .list-item:hover { border-color: var(--line-strong); }
+  .list-item.selected {
+    border-color: var(--selected);
+    background: var(--selected-bg);
+  }
+
+  .list-item-name {
+    flex: 1;
+    padding: 9px 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .list-item-name:focus-visible {
+    outline: 2px solid var(--selected);
+    outline-offset: -2px;
+  }
+  .list-item-name input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: inherit;
+    outline: none;
+    padding: 0;
+  }
+  .list-item-meta {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 6px;
+  }
+  .selected .list-item-meta { color: var(--selected); }
+
+  .list-item-controls {
+    display: flex;
+    gap: 2px;
+    padding: 0 6px 0 0;
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .list-item:hover .list-item-controls,
+  .list-item.selected .list-item-controls,
+  .list-item:focus-within .list-item-controls {
+    opacity: 1;
+  }
+  .icon-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1;
+    transition: 120ms ease;
+  }
+  .icon-btn:hover { background: var(--accent-soft); color: var(--text); }
+  .icon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .icon-btn:disabled:hover { background: transparent; color: var(--muted); }
+  .icon-btn.danger:hover { background: var(--red-bg); color: var(--red-text); }
+
+  /* ============ CARD EDITOR (right pane) ============ */
+  .editor-empty {
+    color: var(--muted);
+    font-style: italic;
+    text-align: center;
+    padding: 60px 24px;
+  }
+
+  .editor-section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+  }
+  .editor-section:last-child { border-bottom: none; }
+
+  .editor-section label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .card-title-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    background: var(--card);
+    font-size: 16px;
+    font-weight: 600;
+    transition: 120ms ease;
+  }
+  .card-title-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  }
+  .card-title-input.invalid {
+    border-color: var(--red-line);
+    background: var(--red-bg);
+  }
+
+  /* ============ BULLET CHIPS ============ */
+  .bullets {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .bullet {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    background: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    transition: 120ms ease;
+    overflow: hidden;
+  }
+  .bullet:hover {
+    border-color: var(--line-strong);
+    background: var(--card);
+  }
+  .bullet:focus-within {
+    border-color: var(--accent);
+    background: var(--card);
+    box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+  }
+  .bullet-marker {
+    color: var(--muted);
+    padding: 8px 4px 8px 10px;
+    font-size: 13px;
+    user-select: none;
+  }
+  .bullet-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 8px 6px;
+    font-size: 14px;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    line-height: 1.4;
+    overflow: hidden;
+    min-height: 36px;
+  }
+  .bullet-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    padding: 0 4px;
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .bullet:hover .bullet-controls,
+  .bullet:focus-within .bullet-controls {
+    opacity: 1;
+  }
+
+  /* ============ MOVE-TO MENU ============ */
+  .editor-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .move-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+  .move-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    min-width: 200px;
+    background: var(--card);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow);
+    padding: 6px;
+    z-index: 20;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .move-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .move-menu button:hover { background: var(--accent-soft); }
+  .move-menu button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ============ MODALS ============ */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius-xl);
+    padding: 28px 32px;
+    max-width: 520px;
+    box-shadow: var(--shadow);
+  }
+  .modal h2 {
+    margin: 0 0 12px;
+    font-size: 22px;
+    letter-spacing: -0.02em;
+  }
+  .modal p {
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* ============ TOAST ============ */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+    z-index: 50;
+  }
+  .toast.show { opacity: 1; }
+
+  .hidden { display: none !important; }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-width: 1100px) {
+    .builder {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    .pane-body { max-height: 400px; }
+    .deck-meta { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .app { padding: 14px; }
+    .topbar { flex-direction: column; align-items: flex-start; }
+    .topbar-actions { width: 100%; }
+    .topbar-actions .btn { flex: 1; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-title">
+      <h1>Deck Builder</h1>
+      <span class="topbar-sub">Create and edit study decks for the Study Game</span>
+    </div>
+    <div class="topbar-actions">
+      <input type="file" id="load-file-input" accept=".json,application/json" class="hidden">
+      <button class="btn" id="undo-btn" disabled title="Undo last destructive action">↶ Undo</button>
+      <button class="btn" id="load-btn">Load Deck…</button>
+      <button class="btn" id="paste-btn">Paste JSON…</button>
+      <button class="btn" id="new-btn">New Deck</button>
+      <button class="btn btn-primary" id="download-btn" disabled>Download Deck</button>
+    </div>
+  </header>
+
+  <!-- EMPTY STATE -->
+  <section id="empty-state" class="empty-state">
+    <h2>No deck loaded</h2>
+    <p>Start a new deck from scratch, load an existing JSON file, or paste JSON from an AI chatbot. Your work auto-saves so you won't lose it on accidental refresh.</p>
+    <div class="empty-state-actions">
+      <button class="btn btn-primary" id="empty-new-btn">+ New Deck</button>
+      <button class="btn" id="empty-load-btn">Load Deck File</button>
+      <button class="btn" id="empty-paste-btn">Paste JSON</button>
+    </div>
+  </section>
+
+  <!-- DECK META -->
+  <section id="deck-meta" class="deck-meta hidden">
+    <div class="field-group">
+      <label for="deck-name-input">Deck name</label>
+      <input type="text" id="deck-name-input" placeholder="e.g. Biology 101 Midterm">
+    </div>
+    <div class="field-group">
+      <label for="deck-desc-input">Description (optional)</label>
+      <input type="text" id="deck-desc-input" placeholder="One-line summary of what's in the deck">
+    </div>
+    <div class="deck-stats">
+      <span><strong id="stat-categories">0</strong> categories</span>
+      <span><strong id="stat-cards">0</strong> cards</span>
+      <span><strong id="stat-bullets">0</strong> bullets total</span>
+      <span class="save-status" id="save-status"></span>
+    </div>
+  </section>
+
+  <!-- BUILDER -->
+  <section id="builder" class="builder hidden">
+
+    <!-- CATEGORIES PANE -->
+    <div class="pane">
+      <div class="pane-header">
+        <span>Categories</span>
+        <span id="cat-count-meta"></span>
+      </div>
+      <div class="pane-body">
+        <div id="categories-list"></div>
+        <button class="btn-add" id="add-category-btn">+ Add Category</button>
+      </div>
+    </div>
+
+    <!-- CARDS PANE -->
+    <div class="pane">
+      <div class="pane-header">
+        <span id="cards-pane-title">Cards</span>
+        <span id="card-count-meta"></span>
+      </div>
+      <div class="pane-body">
+        <div id="cards-list"></div>
+        <button class="btn-add" id="add-card-btn" disabled>+ Add Card</button>
+      </div>
+    </div>
+
+    <!-- CARD EDITOR PANE -->
+    <div class="pane">
+      <div class="pane-header">
+        <span id="editor-pane-title">Editing card</span>
+      </div>
+      <div id="editor-body" class="pane-body" style="padding: 0;">
+        <div class="editor-empty" id="editor-empty">
+          Select a card to edit it, or click "+ Add Card" in the middle column.
+        </div>
+        <div id="editor-content" class="hidden"></div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  deck: null,
+  selectedCategoryIdx: null,
+  editingCardIdx: null,
+  toastTimer: null,
+  // Single-level undo: stores the previous full state before the most recent
+  // structural mutation (delete category/card/bullet, move, add). Cleared on load.
+  undoSnapshot: null,
+  // Tracks whether there are unsaved changes since the last download. Used to
+  // avoid the beforeunload warning right after a clean download.
+  dirty: false,
+  // Debounce handle for auto-save.
+  saveTimeout: null,
+};
+
+const STORAGE_KEY = 'deck_builder_v1';
+const SAVE_DEBOUNCE_MS = 600;
+
+// Sample starter card to show the user the pattern when they create a new deck
+const STARTER_DECK = {
+  schema_version: 1,
+  deck_name: 'My New Deck',
+  description: '',
+  categories: [
+    {
+      name: 'Example Category',
+      cards: [
+        {
+          title: 'Example Card',
+          details: [
+            'This is the first detail bullet — the answer side will show all bullets.',
+            'Click any bullet to edit it.',
+            'Press Enter to save and create a new bullet below.',
+            'Click the × to remove a bullet.',
+            'Delete this whole card and category once you have your own.'
+          ]
+        }
+      ]
+    }
+  ]
+};
+
+// ============================================================
+// UTILITIES
+// ============================================================
+const $ = (id) => document.getElementById(id);
+
+function escapeHTML(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function showToast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(state.toastTimer);
+  state.toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ============================================================
+// VALIDATION (matches Study Game's validateDeck — keep in sync)
+// ============================================================
+function validateDeck(d) {
+  const errors = [];
+  if (!d || typeof d !== 'object' || Array.isArray(d)) {
+    errors.push('File is not a JSON object.');
+    return errors;
+  }
+  if (d.schema_version !== 1) errors.push(`schema_version must be 1 (got ${d.schema_version}).`);
+  if (typeof d.deck_name !== 'string' || !d.deck_name.trim()) errors.push('deck_name is required.');
+  if (d.description !== undefined && typeof d.description !== 'string') {
+    errors.push('description, if present, must be a string.');
+  }
+  if (!Array.isArray(d.categories) || d.categories.length === 0) {
+    errors.push('categories must be a non-empty array.');
+  } else {
+    d.categories.forEach((c, i) => {
+      if (!c || typeof c !== 'object') {
+        errors.push(`Category ${i}: must be an object.`);
+        return;
+      }
+      if (!c.name || typeof c.name !== 'string') errors.push(`Category ${i}: name is required and must be a string.`);
+      if (!Array.isArray(c.cards) || c.cards.length === 0) {
+        errors.push(`Category ${i} (${c.name || ''}): cards must be a non-empty array.`);
+      } else {
+        c.cards.forEach((card, j) => {
+          if (!card || typeof card !== 'object') {
+            errors.push(`Category ${i} card ${j}: must be an object.`);
+            return;
+          }
+          if (!card.title || typeof card.title !== 'string') errors.push(`Category ${i} card ${j}: title is required and must be a string.`);
+          if (!Array.isArray(card.details)) {
+            errors.push(`Category ${i} card ${j}: details must be an array.`);
+          } else {
+            card.details.forEach((d, k) => {
+              if (typeof d !== 'string') {
+                errors.push(`Category ${i} card ${j} detail ${k}: each detail must be a string.`);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  return errors;
+}
+
+// Forgiving normalizer for use when LOADING into the builder. The builder's
+// whole purpose is to fix imperfect decks, so it accepts more than the strict
+// validateDeck (which the Study Game uses). Returns { deck, fixCount } so we
+// can tell the user what got patched.
+//
+// Throws only on truly unrecoverable shapes (not an object, no categories field).
+// Everything else gets coerced into editable form so the user can fix it.
+function normalizeDeck(input) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    throw new Error('Deck must be a JSON object.');
+  }
+  let fixCount = 0;
+  const d = input;
+
+  if (d.schema_version !== 1) { d.schema_version = 1; fixCount++; }
+
+  if (typeof d.deck_name !== 'string' || !d.deck_name.trim()) {
+    d.deck_name = (typeof d.deck_name === 'string' && d.deck_name) || 'Untitled Deck';
+    fixCount++;
+  }
+
+  if (d.description !== undefined && typeof d.description !== 'string') {
+    // If description is some non-string thing, try to stringify or drop it
+    try { d.description = String(d.description); } catch { d.description = ''; }
+    fixCount++;
+  }
+
+  if (!Array.isArray(d.categories)) {
+    d.categories = [];
+    fixCount++;
+  }
+
+  d.categories = d.categories.map((cat, i) => {
+    if (!cat || typeof cat !== 'object') {
+      fixCount++;
+      cat = { name: '', cards: [] };
+    }
+    if (typeof cat.name !== 'string') {
+      cat.name = '';
+      fixCount++;
+    }
+    if (!Array.isArray(cat.cards)) {
+      cat.cards = [];
+      fixCount++;
+    }
+    cat.cards = cat.cards.map((card, j) => {
+      if (!card || typeof card !== 'object') {
+        fixCount++;
+        card = { title: '', details: [] };
+      }
+      if (typeof card.title !== 'string') {
+        card.title = '';
+        fixCount++;
+      }
+      // details might be a string (single bullet), array, or missing
+      if (typeof card.details === 'string') {
+        card.details = [card.details];
+        fixCount++;
+      } else if (!Array.isArray(card.details)) {
+        card.details = [];
+        fixCount++;
+      } else {
+        // Coerce non-string entries to strings
+        card.details = card.details.map((d, k) => {
+          if (typeof d !== 'string') {
+            fixCount++;
+            try { return String(d); } catch { return ''; }
+          }
+          return d;
+        });
+      }
+      return card;
+    });
+    return cat;
+  });
+
+  return { deck: d, fixCount };
+}
+
+// Strip ```json fences from pasted content (AI chatbots love adding these)
+function stripCodeFences(text) {
+  const trimmed = text.trim();
+  const fenceMatch = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  const openOnly = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*)$/);
+  if (openOnly) return openOnly[1].replace(/```\s*$/, '').trim();
+  return trimmed;
+}
+
+// ============================================================
+// AUTO-SAVE
+// ============================================================
+function saveProgress() {
+  if (!state.deck) return;
+  // Show "unsaved" right away so the user sees their changes are pending
+  setSaveStatus('unsaved');
+  // Debounce the actual write so rapid keystrokes don't cause input lag.
+  // We use SAVE_DEBOUNCE_MS (currently 600ms) — long enough that a typing
+  // burst only triggers one write, short enough that a brief pause feels
+  // like an immediate save.
+  if (state.saveTimeout) clearTimeout(state.saveTimeout);
+  state.saveTimeout = setTimeout(() => {
+    state.saveTimeout = null;
+    writeProgressNow();
+  }, SAVE_DEBOUNCE_MS);
+}
+
+// Synchronous write — used by debounce timeout, by Download (so the latest
+// keystroke is captured), and by beforeunload.
+function writeProgressNow() {
+  if (!state.deck) return;
+  try {
+    const payload = {
+      savedAt: Date.now(),
+      deck: state.deck,
+      selectedCategoryIdx: state.selectedCategoryIdx,
+      editingCardIdx: state.editingCardIdx,
+      dirty: state.dirty,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    setSaveStatus('saved');
+  } catch (e) {
+    setSaveStatus('error');
+    console.warn('Auto-save failed:', e);
+  }
+}
+
+// Flush any pending debounced save immediately. Call before download or unload.
+function flushSave() {
+  if (state.saveTimeout) {
+    clearTimeout(state.saveTimeout);
+    state.saveTimeout = null;
+    writeProgressNow();
+  }
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    if (!payload || !payload.deck) return null;
+    return payload;
+  } catch { return null; }
+}
+
+function clearProgress() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
+}
+
+function setSaveStatus(state_str) {
+  const el = $('save-status');
+  if (!el) return;
+  el.classList.remove('saved', 'unsaved', 'error');
+  if (state_str === 'saved') {
+    el.classList.add('saved');
+    el.textContent = '✓ Auto-saved';
+  } else if (state_str === 'error') {
+    el.classList.add('error');
+    el.textContent = '⚠ Auto-save failed (storage may be full)';
+  } else if (state_str === 'unsaved') {
+    el.classList.add('unsaved');
+    el.textContent = 'Unsaved changes';
+  }
+}
+
+// Wrap any state mutation with this so re-render and auto-save happen consistently
+function mutateAndRender() {
+  state.dirty = true;
+  saveProgress();
+  renderAll();
+}
+
+// Take a snapshot of the deck before a destructive action so the user can undo it.
+// Single-level undo: each new snapshot replaces the previous one. We snapshot
+// only structural changes (delete, move, paste-split) — not every keystroke,
+// which would be both useless and overwrite the meaningful undo target.
+function snapshotForUndo(label) {
+  state.undoSnapshot = {
+    deck: JSON.parse(JSON.stringify(state.deck)),
+    selectedCategoryIdx: state.selectedCategoryIdx,
+    editingCardIdx: state.editingCardIdx,
+    label: label || 'last action',
+  };
+  updateUndoButton();
+}
+
+function undoLastAction() {
+  if (!state.undoSnapshot) return;
+  const snap = state.undoSnapshot;
+  state.deck = snap.deck;
+  state.selectedCategoryIdx = snap.selectedCategoryIdx;
+  state.editingCardIdx = snap.editingCardIdx;
+  state.undoSnapshot = null; // single-level: undoing consumes the snapshot
+  state.dirty = true;
+  saveProgress();
+  renderAll();
+  showToast(`Undid: ${snap.label}`);
+}
+
+function updateUndoButton() {
+  const btn = $('undo-btn');
+  if (!btn) return;
+  if (state.undoSnapshot) {
+    btn.disabled = false;
+    btn.title = `Undo: ${state.undoSnapshot.label}`;
+  } else {
+    btn.disabled = true;
+    btn.title = 'Nothing to undo';
+  }
+}
+
+// ============================================================
+// DECK CREATION & LOADING
+// ============================================================
+function startNewDeck() {
+  state.deck = JSON.parse(JSON.stringify(STARTER_DECK));
+  state.selectedCategoryIdx = 0;
+  state.editingCardIdx = 0;
+  state.undoSnapshot = null;
+  state.dirty = false;
+  renderAll();
+  saveProgress();
+}
+
+function loadDeckFromText(text, source) {
+  let parsed;
+  try {
+    const cleaned = stripCodeFences(text);
+    parsed = JSON.parse(cleaned);
+  } catch (err) {
+    showToast(`Could not parse JSON: ${err.message}`);
+    return false;
+  }
+  let normalized;
+  try {
+    normalized = normalizeDeck(parsed);
+  } catch (err) {
+    showToast(err.message);
+    return false;
+  }
+  state.deck = normalized.deck;
+  state.selectedCategoryIdx = normalized.deck.categories.length > 0 ? 0 : null;
+  state.editingCardIdx = (state.selectedCategoryIdx !== null && normalized.deck.categories[0].cards.length > 0) ? 0 : null;
+  state.undoSnapshot = null; // can't undo into a different deck
+  state.dirty = false;       // freshly loaded — nothing unsaved
+  renderAll();
+  saveProgress();
+  if (normalized.fixCount > 0) {
+    showToast(`Loaded ${source}: "${normalized.deck.deck_name}" (${normalized.fixCount} issue${normalized.fixCount === 1 ? '' : 's'} auto-patched — review and edit)`);
+  } else {
+    showToast(`Loaded ${source}: "${normalized.deck.deck_name}"`);
+  }
+  return true;
+}
+
+function handleLoadFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => loadDeckFromText(e.target.result, 'deck file');
+  reader.readAsText(file);
+}
+
+// ============================================================
+// PASTE JSON MODAL
+// ============================================================
+function showPasteModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal" style="max-width: 720px;">
+      <h2>Paste Deck JSON</h2>
+      <p>Paste the JSON output from an AI chatbot below. Code fences (<code>\`\`\`json</code>) will be stripped automatically.</p>
+      <textarea id="paste-textarea" placeholder='{"schema_version": 1, "deck_name": "...", ...}' style="width: 100%; min-height: 280px; padding: 12px; border: 1px solid var(--line-strong); border-radius: var(--radius-sm); font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; resize: vertical;"></textarea>
+      <p id="paste-error" style="color: var(--red-text); font-style: italic; margin: 8px 0 16px; min-height: 20px;"></p>
+      <div class="modal-actions">
+        <button class="btn" id="paste-cancel">Cancel</button>
+        <button class="btn btn-primary" id="paste-confirm">Load This Deck</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  $('paste-textarea').focus();
+
+  $('paste-confirm').addEventListener('click', () => {
+    const text = $('paste-textarea').value.trim();
+    if (!text) {
+      $('paste-error').textContent = 'Paste some JSON first.';
+      return;
+    }
+    let parsed;
+    try {
+      const cleaned = stripCodeFences(text);
+      parsed = JSON.parse(cleaned);
+    } catch (err) {
+      $('paste-error').textContent = 'Could not parse JSON: ' + err.message;
+      return;
+    }
+    let normalized;
+    try {
+      normalized = normalizeDeck(parsed);
+    } catch (err) {
+      $('paste-error').textContent = err.message;
+      return;
+    }
+    state.deck = normalized.deck;
+    state.selectedCategoryIdx = normalized.deck.categories.length > 0 ? 0 : null;
+    state.editingCardIdx = (state.selectedCategoryIdx !== null && normalized.deck.categories[0].cards.length > 0) ? 0 : null;
+    state.undoSnapshot = null;
+    state.dirty = false;
+    overlay.remove();
+    renderAll();
+    saveProgress();
+    if (normalized.fixCount > 0) {
+      showToast(`Loaded "${normalized.deck.deck_name}" (${normalized.fixCount} issue${normalized.fixCount === 1 ? '' : 's'} auto-patched)`);
+    } else {
+      showToast(`Loaded "${normalized.deck.deck_name}"`);
+    }
+  });
+  $('paste-cancel').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ============================================================
+// DECK MUTATIONS
+// ============================================================
+function addCategory() {
+  if (!state.deck) return;
+  state.deck.categories.push({ name: '', cards: [] });
+  state.selectedCategoryIdx = state.deck.categories.length - 1;
+  state.editingCardIdx = null;
+  mutateAndRender();
+  // Focus the name input of the new category to invite immediate typing
+  setTimeout(() => {
+    const lastCat = $('categories-list').lastElementChild;
+    if (lastCat) {
+      const nameBtn = lastCat.querySelector('.list-item-name');
+      if (nameBtn) startInlineRename(nameBtn, state.deck.categories.length - 1);
+    }
+  }, 0);
+}
+
+function deleteCategory(idx) {
+  if (!state.deck) return;
+  if (!confirm(`Delete the category "${state.deck.categories[idx].name || '(unnamed)'}"? All ${state.deck.categories[idx].cards.length} card(s) in it will be lost.`)) return;
+  snapshotForUndo(`delete category "${state.deck.categories[idx].name || '(unnamed)'}"`);
+  state.deck.categories.splice(idx, 1);
+  // Adjust selection if necessary
+  if (state.deck.categories.length === 0) {
+    state.selectedCategoryIdx = null;
+    state.editingCardIdx = null;
+  } else {
+    state.selectedCategoryIdx = Math.min(state.selectedCategoryIdx, state.deck.categories.length - 1);
+    state.editingCardIdx = null;
+  }
+  mutateAndRender();
+}
+
+function moveCategory(idx, delta) {
+  if (!state.deck) return;
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= state.deck.categories.length) return;
+  snapshotForUndo(`move category "${state.deck.categories[idx].name || '(unnamed)'}"`);
+  const [moved] = state.deck.categories.splice(idx, 1);
+  state.deck.categories.splice(newIdx, 0, moved);
+  if (state.selectedCategoryIdx === idx) state.selectedCategoryIdx = newIdx;
+  else if (state.selectedCategoryIdx === newIdx) state.selectedCategoryIdx = idx;
+  mutateAndRender();
+}
+
+function renameCategory(idx, newName) {
+  if (!state.deck) return;
+  state.deck.categories[idx].name = newName;
+  state.dirty = true;
+  saveProgress();
+  // Re-render only the categories pane to update the displayed name
+  renderCategories();
+  renderStats();
+}
+
+function selectCategory(idx) {
+  state.selectedCategoryIdx = idx;
+  // Don't auto-select a card — let the user click one
+  state.editingCardIdx = null;
+  saveProgress();
+  renderCategories();
+  renderCards();
+  renderEditor();
+  renderStats();
+}
+
+function addCard() {
+  if (!state.deck || state.selectedCategoryIdx === null) return;
+  const cat = state.deck.categories[state.selectedCategoryIdx];
+  cat.cards.push({ title: '', details: [] });
+  state.editingCardIdx = cat.cards.length - 1;
+  mutateAndRender();
+  // Auto-focus the new card's title input
+  setTimeout(() => {
+    const titleInput = $('card-title-input');
+    if (titleInput) titleInput.focus();
+  }, 0);
+}
+
+function deleteCard(idx) {
+  if (!state.deck || state.selectedCategoryIdx === null) return;
+  const cat = state.deck.categories[state.selectedCategoryIdx];
+  if (!confirm(`Delete the card "${cat.cards[idx].title || '(untitled)'}"?`)) return;
+  snapshotForUndo(`delete card "${cat.cards[idx].title || '(untitled)'}"`);
+  cat.cards.splice(idx, 1);
+  if (state.editingCardIdx === idx) {
+    state.editingCardIdx = cat.cards.length > 0 ? Math.min(idx, cat.cards.length - 1) : null;
+  } else if (state.editingCardIdx > idx) {
+    state.editingCardIdx--;
+  }
+  mutateAndRender();
+}
+
+function moveCard(idx, delta) {
+  if (!state.deck || state.selectedCategoryIdx === null) return;
+  const cat = state.deck.categories[state.selectedCategoryIdx];
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= cat.cards.length) return;
+  snapshotForUndo(`move card "${cat.cards[idx].title || '(untitled)'}"`);
+  const [moved] = cat.cards.splice(idx, 1);
+  cat.cards.splice(newIdx, 0, moved);
+  if (state.editingCardIdx === idx) state.editingCardIdx = newIdx;
+  else if (state.editingCardIdx === newIdx) state.editingCardIdx = idx;
+  mutateAndRender();
+}
+
+function moveCardToCategory(targetCatIdx) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  if (targetCatIdx === state.selectedCategoryIdx) return;
+  const fromCat = state.deck.categories[state.selectedCategoryIdx];
+  const toCat = state.deck.categories[targetCatIdx];
+  snapshotForUndo(`move card "${fromCat.cards[state.editingCardIdx].title || '(untitled)'}" to "${toCat.name || '(unnamed)'}"`);
+  const [card] = fromCat.cards.splice(state.editingCardIdx, 1);
+  toCat.cards.push(card);
+  state.selectedCategoryIdx = targetCatIdx;
+  state.editingCardIdx = toCat.cards.length - 1;
+  mutateAndRender();
+  showToast(`Moved card to "${toCat.name || '(unnamed)'}"`);
+}
+
+function selectCard(idx) {
+  state.editingCardIdx = idx;
+  saveProgress();
+  renderCards();
+  renderEditor();
+}
+
+function updateCardTitle(newTitle) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx].title = newTitle;
+  state.dirty = true;
+  saveProgress();
+  renderCards();
+  renderStats();
+}
+
+function updateBullet(bulletIdx, newText) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx].details[bulletIdx] = newText;
+  state.dirty = true;
+  saveProgress();
+  renderStats();
+}
+
+function addBullet(afterIdx) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  const card = state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx];
+  const insertAt = afterIdx === undefined ? card.details.length : afterIdx + 1;
+  card.details.splice(insertAt, 0, '');
+  state.dirty = true;
+  saveProgress();
+  renderEditor();
+  renderStats();
+  setTimeout(() => {
+    const newBullet = document.querySelector(`.bullet[data-idx="${insertAt}"] .bullet-input`);
+    if (newBullet) newBullet.focus();
+  }, 0);
+}
+
+function deleteBullet(idx) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  const card = state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx];
+  // Only snapshot if the bullet had content — losing an empty bullet isn't worth undoing
+  if (card.details[idx] && card.details[idx].trim()) {
+    snapshotForUndo('delete bullet');
+  }
+  card.details.splice(idx, 1);
+  state.dirty = true;
+  saveProgress();
+  renderEditor();
+  renderStats();
+  updateUndoButton();
+}
+
+function moveBullet(idx, delta) {
+  if (!state.deck || state.selectedCategoryIdx === null || state.editingCardIdx === null) return;
+  const card = state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx];
+  const newIdx = idx + delta;
+  if (newIdx < 0 || newIdx >= card.details.length) return;
+  snapshotForUndo('move bullet');
+  const [moved] = card.details.splice(idx, 1);
+  card.details.splice(newIdx, 0, moved);
+  state.dirty = true;
+  saveProgress();
+  renderEditor();
+  updateUndoButton();
+}
+
+// ============================================================
+// PASTE-MULTILINE HANDLING
+// ============================================================
+// If user pastes a multiline block into a bullet, offer to split it into multiple bullets.
+function handleBulletPaste(e, bulletIdx) {
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text || !text.includes('\n')) return; // single-line paste, behave normally
+  const lines = text.split(/\r?\n/).map(l => l.replace(/^\s*[-•*◆]\s*/, '').trim()).filter(Boolean);
+  if (lines.length <= 1) return;
+
+  e.preventDefault();
+  if (!confirm(`Split this paste into ${lines.length} separate bullets?`)) {
+    // User said no — paste as-is into current bullet
+    document.execCommand('insertText', false, text);
+    return;
+  }
+
+  snapshotForUndo(`split paste into ${lines.length} bullets`);
+  const card = state.deck.categories[state.selectedCategoryIdx].cards[state.editingCardIdx];
+  // Replace the current bullet with the first line, then insert the rest after it
+  card.details.splice(bulletIdx, 1, ...lines);
+  state.dirty = true;
+  saveProgress();
+  renderEditor();
+  renderStats();
+  updateUndoButton();
+  showToast(`Split into ${lines.length} bullets`);
+}
+
+// ============================================================
+// INLINE RENAME (for category names)
+// ============================================================
+function startInlineRename(nameEl, categoryIdx) {
+  if (!state.deck) return;
+  const cat = state.deck.categories[categoryIdx];
+  if (!cat) return;
+  const currentValue = cat.name;
+  // Replace the element content with an input
+  nameEl.innerHTML = `<input type="text" value="${escapeHTML(currentValue)}">`;
+  const input = nameEl.querySelector('input');
+  input.focus();
+  input.select();
+
+  function commit() {
+    const newName = input.value;
+    renameCategory(categoryIdx, newName);
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      input.blur();
+    } else if (e.key === 'Escape') {
+      input.value = currentValue;
+      input.blur();
+    }
+    e.stopPropagation();
+  });
+}
+
+// ============================================================
+// RENDERING
+// ============================================================
+function renderAll() {
+  if (!state.deck) {
+    $('empty-state').classList.remove('hidden');
+    $('deck-meta').classList.add('hidden');
+    $('builder').classList.add('hidden');
+    $('download-btn').disabled = true;
+    updateUndoButton();
+    return;
+  }
+  $('empty-state').classList.add('hidden');
+  $('deck-meta').classList.remove('hidden');
+  $('builder').classList.remove('hidden');
+  renderDeckMeta();
+  renderCategories();
+  renderCards();
+  renderEditor();
+  renderStats();
+  $('download-btn').disabled = false;
+  updateUndoButton();
+}
+
+function renderDeckMeta() {
+  const nameInput = $('deck-name-input');
+  const descInput = $('deck-desc-input');
+  // Only update value if the input isn't currently focused (avoid clobbering typing)
+  if (document.activeElement !== nameInput) nameInput.value = state.deck.deck_name || '';
+  if (document.activeElement !== descInput) descInput.value = state.deck.description || '';
+  nameInput.classList.toggle('invalid', !nameInput.value.trim());
+}
+
+function renderCategories() {
+  const list = $('categories-list');
+  list.innerHTML = '';
+  if (!state.deck.categories.length) {
+    const empty = document.createElement('div');
+    empty.className = 'pane-empty';
+    empty.textContent = 'No categories yet. Click + Add Category below.';
+    list.appendChild(empty);
+    $('cat-count-meta').textContent = '';
+    return;
+  }
+  $('cat-count-meta').textContent = `${state.deck.categories.length}`;
+  state.deck.categories.forEach((cat, i) => {
+    const isSelected = i === state.selectedCategoryIdx;
+    const item = document.createElement('div');
+    item.className = 'list-item' + (isSelected ? ' selected' : '');
+    item.innerHTML = `
+      <div class="list-item-name" role="button" tabindex="0" data-idx="${i}" title="Click to select, double-click to rename">
+        ${cat.name ? escapeHTML(cat.name) : '<em style="color: var(--muted);">(unnamed)</em>'}
+        <span class="list-item-meta">${cat.cards.length}</span>
+      </div>
+      <div class="list-item-controls">
+        <button class="icon-btn" title="Move up" data-action="up" data-idx="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="icon-btn" title="Move down" data-action="down" data-idx="${i}" ${i === state.deck.categories.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="icon-btn" title="Rename" data-action="rename" data-idx="${i}">✎</button>
+        <button class="icon-btn danger" title="Delete category" data-action="delete" data-idx="${i}">×</button>
+      </div>
+    `;
+    // Single-click selects, double-click starts rename
+    const nameBtn = item.querySelector('.list-item-name');
+    nameBtn.addEventListener('click', () => selectCategory(i));
+    nameBtn.addEventListener('dblclick', () => startInlineRename(nameBtn, i));
+    nameBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectCategory(i);
+      }
+    });
+    item.querySelectorAll('.list-item-controls .icon-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (action === 'up') moveCategory(idx, -1);
+        else if (action === 'down') moveCategory(idx, 1);
+        else if (action === 'rename') startInlineRename(item.querySelector('.list-item-name'), idx);
+        else if (action === 'delete') deleteCategory(idx);
+      });
+    });
+    list.appendChild(item);
+  });
+}
+
+function renderCards() {
+  const list = $('cards-list');
+  list.innerHTML = '';
+  const cat = state.selectedCategoryIdx !== null ? state.deck.categories[state.selectedCategoryIdx] : null;
+
+  if (!cat) {
+    $('cards-pane-title').textContent = 'Cards';
+    $('card-count-meta').textContent = '';
+    $('add-card-btn').disabled = true;
+    const empty = document.createElement('div');
+    empty.className = 'pane-empty';
+    empty.textContent = 'Select a category to see its cards.';
+    list.appendChild(empty);
+    return;
+  }
+
+  $('cards-pane-title').textContent = cat.name ? `Cards in "${cat.name}"` : 'Cards';
+  $('card-count-meta').textContent = `${cat.cards.length}`;
+  $('add-card-btn').disabled = false;
+
+  if (!cat.cards.length) {
+    const empty = document.createElement('div');
+    empty.className = 'pane-empty';
+    empty.textContent = 'No cards yet. Click + Add Card below.';
+    list.appendChild(empty);
+    return;
+  }
+
+  cat.cards.forEach((card, i) => {
+    const isSelected = i === state.editingCardIdx;
+    const item = document.createElement('div');
+    item.className = 'list-item' + (isSelected ? ' selected' : '');
+    item.innerHTML = `
+      <div class="list-item-name" role="button" tabindex="0" data-idx="${i}">
+        ${card.title ? escapeHTML(card.title) : '<em style="color: var(--muted);">(untitled)</em>'}
+        <span class="list-item-meta">${card.details.length} bullet${card.details.length === 1 ? '' : 's'}</span>
+      </div>
+      <div class="list-item-controls">
+        <button class="icon-btn" title="Move up" data-action="up" data-idx="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="icon-btn" title="Move down" data-action="down" data-idx="${i}" ${i === cat.cards.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="icon-btn danger" title="Delete card" data-action="delete" data-idx="${i}">×</button>
+      </div>
+    `;
+    const nameBtn = item.querySelector('.list-item-name');
+    nameBtn.addEventListener('click', () => selectCard(i));
+    nameBtn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectCard(i);
+      }
+    });
+    item.querySelectorAll('.list-item-controls .icon-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const idx = parseInt(btn.dataset.idx, 10);
+        if (action === 'up') moveCard(idx, -1);
+        else if (action === 'down') moveCard(idx, 1);
+        else if (action === 'delete') deleteCard(idx);
+      });
+    });
+    list.appendChild(item);
+  });
+}
+
+function renderEditor() {
+  const empty = $('editor-empty');
+  const content = $('editor-content');
+  if (state.selectedCategoryIdx === null || state.editingCardIdx === null) {
+    empty.classList.remove('hidden');
+    content.classList.add('hidden');
+    $('editor-pane-title').textContent = 'Editing card';
+    return;
+  }
+  const cat = state.deck.categories[state.selectedCategoryIdx];
+  const card = cat.cards[state.editingCardIdx];
+  if (!card) {
+    empty.classList.remove('hidden');
+    content.classList.add('hidden');
+    return;
+  }
+
+  empty.classList.add('hidden');
+  content.classList.remove('hidden');
+  $('editor-pane-title').textContent = `Editing card ${state.editingCardIdx + 1} of ${cat.cards.length}`;
+
+  // Build bullets HTML
+  const bulletsHTML = card.details.map((d, i) => `
+    <div class="bullet" data-idx="${i}">
+      <span class="bullet-marker">${i + 1}.</span>
+      <textarea class="bullet-input" rows="1" data-idx="${i}" placeholder="Type bullet text…">${escapeHTML(d)}</textarea>
+      <div class="bullet-controls">
+        <button class="icon-btn" title="Move up" data-bullet-action="up" data-idx="${i}" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="icon-btn" title="Move down" data-bullet-action="down" data-idx="${i}" ${i === card.details.length - 1 ? 'disabled' : ''}>↓</button>
+        <button class="icon-btn danger" title="Delete bullet" data-bullet-action="delete" data-idx="${i}">×</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Build move-to options (excluding current category)
+  const moveOptions = state.deck.categories.map((c, i) => {
+    if (i === state.selectedCategoryIdx) return '';
+    return `<button data-target="${i}">→ ${escapeHTML(c.name || '(unnamed)')}</button>`;
+  }).filter(Boolean).join('');
+
+  content.innerHTML = `
+    <div class="editor-section">
+      <label for="card-title-input">Card title (the prompt)</label>
+      <input type="text" id="card-title-input" class="card-title-input ${!card.title.trim() ? 'invalid' : ''}" value="${escapeHTML(card.title)}" placeholder="What's shown on the front of the card">
+    </div>
+    <div class="editor-section">
+      <label>Details (the answer bullets)</label>
+      <div class="bullets" id="bullets-container">${bulletsHTML}</div>
+      <button class="btn-add" id="add-bullet-btn">+ Add Bullet</button>
+    </div>
+    <div class="editor-section">
+      <div class="editor-actions">
+        ${moveOptions ? `
+          <div class="move-wrapper">
+            <button class="btn" id="move-card-btn">Move to category…</button>
+            <div class="move-menu hidden" id="move-menu">${moveOptions}</div>
+          </div>
+        ` : ''}
+        <button class="btn btn-danger" id="delete-card-btn">Delete card</button>
+      </div>
+    </div>
+  `;
+
+  // Wire up title input
+  const titleInput = $('card-title-input');
+  titleInput.addEventListener('input', () => {
+    updateCardTitle(titleInput.value);
+    titleInput.classList.toggle('invalid', !titleInput.value.trim());
+  });
+
+  // Wire up bullets
+  content.querySelectorAll('.bullet-input').forEach(textarea => {
+    autoGrowTextarea(textarea);
+    textarea.addEventListener('input', () => {
+      autoGrowTextarea(textarea);
+      const idx = parseInt(textarea.dataset.idx, 10);
+      updateBullet(idx, textarea.value);
+    });
+    textarea.addEventListener('keydown', (e) => {
+      const idx = parseInt(textarea.dataset.idx, 10);
+      // Enter (without shift) creates a new bullet below
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        addBullet(idx);
+      } else if (e.key === 'Backspace' && textarea.value === '') {
+        // Backspace on an empty bullet deletes it (and doesn't bubble)
+        e.preventDefault();
+        deleteBullet(idx);
+        // Focus the previous bullet's input
+        setTimeout(() => {
+          const prev = document.querySelector(`.bullet[data-idx="${idx - 1}"] .bullet-input`);
+          if (prev) prev.focus();
+        }, 0);
+      }
+    });
+    textarea.addEventListener('paste', (e) => {
+      const idx = parseInt(textarea.dataset.idx, 10);
+      handleBulletPaste(e, idx);
+    });
+  });
+
+  // Wire up bullet controls
+  content.querySelectorAll('.bullet-controls .icon-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.bulletAction;
+      const idx = parseInt(btn.dataset.idx, 10);
+      if (action === 'up') moveBullet(idx, -1);
+      else if (action === 'down') moveBullet(idx, 1);
+      else if (action === 'delete') deleteBullet(idx);
+    });
+  });
+
+  // Wire up add bullet
+  $('add-bullet-btn').addEventListener('click', () => addBullet());
+
+  // Wire up move-to menu
+  const moveBtn = $('move-card-btn');
+  if (moveBtn) {
+    const moveMenu = $('move-menu');
+    let outsideClickHandler = null;
+    function closeMenu() {
+      moveMenu.classList.add('hidden');
+      if (outsideClickHandler) {
+        document.removeEventListener('click', outsideClickHandler);
+        outsideClickHandler = null;
+      }
+    }
+    moveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const wasHidden = moveMenu.classList.contains('hidden');
+      moveMenu.classList.toggle('hidden');
+      if (wasHidden) {
+        // Just opened — attach an outside-click closer (defer to next tick so
+        // we don't immediately catch this same click)
+        outsideClickHandler = (ev) => {
+          if (!moveBtn.contains(ev.target) && !moveMenu.contains(ev.target)) {
+            closeMenu();
+          }
+        };
+        setTimeout(() => document.addEventListener('click', outsideClickHandler), 0);
+      } else {
+        closeMenu();
+      }
+    });
+    moveMenu.querySelectorAll('button').forEach(b => {
+      b.addEventListener('click', () => {
+        const target = parseInt(b.dataset.target, 10);
+        closeMenu();
+        moveCardToCategory(target);
+      });
+    });
+  }
+
+  // Wire up delete card
+  $('delete-card-btn').addEventListener('click', () => deleteCard(state.editingCardIdx));
+}
+
+function autoGrowTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.max(36, el.scrollHeight) + 'px';
+}
+
+function renderStats() {
+  if (!state.deck) return;
+  const cats = state.deck.categories.length;
+  const cards = state.deck.categories.reduce((s, c) => s + c.cards.length, 0);
+  const bullets = state.deck.categories.reduce(
+    (s, c) => s + c.cards.reduce((s2, card) => s2 + card.details.length, 0), 0
+  );
+  $('stat-categories').textContent = cats;
+  $('stat-cards').textContent = cards;
+  $('stat-bullets').textContent = bullets;
+}
+
+// ============================================================
+// DECK NAME / DESCRIPTION INPUT HANDLING
+// ============================================================
+function wireDeckMetaInputs() {
+  $('deck-name-input').addEventListener('input', (e) => {
+    if (!state.deck) return;
+    state.deck.deck_name = e.target.value;
+    e.target.classList.toggle('invalid', !e.target.value.trim());
+    state.dirty = true;
+    saveProgress();
+  });
+  $('deck-desc-input').addEventListener('input', (e) => {
+    if (!state.deck) return;
+    state.deck.description = e.target.value;
+    state.dirty = true;
+    saveProgress();
+  });
+}
+
+// ============================================================
+// DOWNLOAD
+// ============================================================
+function downloadDeck() {
+  if (!state.deck) return;
+  // Make sure any pending debounced auto-save is flushed first
+  flushSave();
+  // Run validation — warn but allow download even with non-blocking issues
+  const errors = validateDeck(state.deck);
+  if (errors.length) {
+    const proceed = confirm(`This deck has ${errors.length} validation issue(s):\n\n${errors.slice(0, 5).join('\n')}${errors.length > 5 ? '\n\n…and more.' : ''}\n\nDownload anyway? (You can fix these in the editor or in a text editor afterward.)`);
+    if (!proceed) return;
+  }
+  const json = JSON.stringify(state.deck, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  const safeName = (state.deck.deck_name || 'deck')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 60) || 'deck';
+  a.download = `${safeName}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  // Successful download clears the dirty flag — beforeunload won't warn unless
+  // the user makes more changes after this point. Re-write the saved payload
+  // immediately so the next page load doesn't show a spurious resume prompt.
+  state.dirty = false;
+  writeProgressNow();
+  showToast(`Downloaded ${safeName}.json`);
+}
+
+// ============================================================
+// RESUME PROMPT
+// ============================================================
+function maybeOfferResume() {
+  const payload = loadProgress();
+  if (!payload) return false;
+  // Don't offer resume for an obviously broken save
+  if (!payload.deck || !Array.isArray(payload.deck.categories)) return false;
+  // Only offer resume for actually unsaved work. After a clean download or a
+  // fresh load, the saved payload is marked clean — there's nothing to rescue,
+  // so we skip the prompt. (For backwards compatibility: older saves without
+  // the `dirty` field are treated as dirty, since we used to always save.)
+  if (payload.dirty === false) return false;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const savedDate = new Date(payload.savedAt);
+  const deckName = payload.deck.deck_name || '(unnamed)';
+  const cats = payload.deck.categories.length;
+  const cards = payload.deck.categories.reduce((s, c) => s + (c.cards ? c.cards.length : 0), 0);
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>Resume editing?</h2>
+      <p>You have unsaved work from a previous session:</p>
+      <p style="background: var(--soft); padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--line); color: var(--text);">
+        <strong>${escapeHTML(deckName)}</strong><br>
+        <span style="color: var(--muted); font-size: 13px;">
+          ${cats} categor${cats === 1 ? 'y' : 'ies'} · ${cards} card${cards === 1 ? '' : 's'} · saved ${savedDate.toLocaleString()}
+        </span>
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-danger" id="resume-discard">Discard</button>
+        <button class="btn btn-primary" id="resume-yes">Resume</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  $('resume-yes').addEventListener('click', () => {
+    state.deck = payload.deck;
+    state.selectedCategoryIdx = (typeof payload.selectedCategoryIdx === 'number' && payload.selectedCategoryIdx < payload.deck.categories.length) ? payload.selectedCategoryIdx : (payload.deck.categories.length > 0 ? 0 : null);
+    state.editingCardIdx = (typeof payload.editingCardIdx === 'number') ? payload.editingCardIdx : null;
+    state.undoSnapshot = null;
+    // Resumed work was previously unsaved (otherwise localStorage wouldn't
+    // hold it) — keep the dirty flag set so the user is reminded to download
+    state.dirty = true;
+    overlay.remove();
+    renderAll();
+  });
+  $('resume-discard').addEventListener('click', () => {
+    clearProgress();
+    overlay.remove();
+  });
+
+  return true;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Top-bar buttons
+  $('undo-btn').addEventListener('click', undoLastAction);
+  $('load-btn').addEventListener('click', () => $('load-file-input').click());
+  $('load-file-input').addEventListener('change', (e) => {
+    handleLoadFile(e.target.files[0]);
+    // Reset so the same file can be re-loaded later
+    e.target.value = '';
+  });
+  $('paste-btn').addEventListener('click', showPasteModal);
+  $('new-btn').addEventListener('click', () => {
+    if (state.deck && state.dirty && !confirm('Start a new deck? Your current work will be replaced (auto-save will be cleared).')) return;
+    clearProgress();
+    startNewDeck();
+  });
+  $('download-btn').addEventListener('click', downloadDeck);
+
+  // Keyboard shortcut: Ctrl+Z / Cmd+Z for undo (when not typing in an input)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+      // Don't hijack undo when the user is typing in a text field — let the
+      // browser's native text-input undo work instead. We only want our undo
+      // for structural operations.
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea') return;
+      if (state.undoSnapshot) {
+        e.preventDefault();
+        undoLastAction();
+      }
+    }
+  });
+
+  // Empty-state buttons
+  $('empty-new-btn').addEventListener('click', startNewDeck);
+  $('empty-load-btn').addEventListener('click', () => $('load-file-input').click());
+  $('empty-paste-btn').addEventListener('click', showPasteModal);
+
+  // Add buttons
+  $('add-category-btn').addEventListener('click', addCategory);
+  $('add-card-btn').addEventListener('click', addCard);
+
+  // Deck meta inputs
+  wireDeckMetaInputs();
+
+  // Warn before navigation if there are UNSAVED changes (since the last download)
+  // — we don't warn just for having any deck loaded, only when there's something
+  // the user could lose by leaving.
+  window.addEventListener('beforeunload', (e) => {
+    // Flush any pending debounced save synchronously before the page goes away
+    flushSave();
+    if (state.deck && state.dirty) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  // Try to resume; if no resume, show empty state (already showing)
+  if (!maybeOfferResume()) {
+    renderAll();
+  } else {
+    renderAll();
+  }
+}
+
+init();
+</script>
+
+</body>
+</html>

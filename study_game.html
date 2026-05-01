@@ -1,0 +1,2122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* CRITICAL: ensures the [hidden] attribute actually hides elements
+     even when our CSS sets display: flex/grid on those elements */
+  [hidden] { display: none !important; }
+
+  :root {
+    --bg-deep: #050a1e;
+    --bg-mid: #0c1740;
+    --bg-card: #142865;
+    --bg-card-hover: #1c3a8a;
+    --bg-card-used: #0a1330;
+    --gold: #f4c542;
+    --gold-bright: #ffd866;
+    --gold-dim: #8a6e1d;
+    --cream: #faf3e0;
+    --text-dim: #8d97bd;
+    --danger: #c44545;
+    --display: 'Bebas Neue', 'Impact', sans-serif;
+    --body: 'Crimson Text', Georgia, 'Times New Roman', serif;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(244, 197, 66, 0.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(20, 40, 101, 0.5), transparent 60%);
+    color: var(--cream);
+    font-family: var(--body);
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  body { min-height: 100vh; overflow-x: hidden; }
+
+  button {
+    font-family: var(--display);
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    background: transparent;
+    color: var(--cream);
+    border: 2px solid var(--gold);
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all 150ms ease;
+    text-transform: uppercase;
+  }
+  button:hover { background: var(--gold); color: var(--bg-deep); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:disabled:hover { background: transparent; color: var(--cream); }
+
+  .primary-btn {
+    background: var(--gold);
+    color: var(--bg-deep);
+    font-size: 22px;
+    padding: 14px 32px;
+  }
+  .primary-btn:hover { background: var(--gold-bright); }
+
+  .secondary-btn {
+    background: transparent;
+    color: var(--gold);
+  }
+
+  .danger-btn {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+  .danger-btn:hover { background: var(--danger); color: var(--cream); }
+
+  input[type="text"], input[type="number"], select {
+    background: var(--bg-mid);
+    color: var(--cream);
+    border: 1px solid var(--gold-dim);
+    padding: 8px 12px;
+    font-family: var(--body);
+    font-size: 17px;
+    border-radius: 0;
+  }
+  input:focus, select:focus { outline: 2px solid var(--gold); border-color: var(--gold); }
+
+  input[type="file"] {
+    color: var(--cream);
+    font-family: var(--body);
+  }
+  input[type="file"]::file-selector-button {
+    font-family: var(--display);
+    letter-spacing: 0.08em;
+    background: var(--gold);
+    color: var(--bg-deep);
+    border: none;
+    padding: 8px 18px;
+    margin-right: 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+
+  input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--gold);
+    cursor: pointer;
+  }
+
+  input[type="range"] {
+    accent-color: var(--gold);
+    cursor: pointer;
+    height: 6px;
+  }
+
+  /* ========== SCREENS ========== */
+  .screen { min-height: 100vh; }
+
+  /* ========== SETUP SCREEN ========== */
+  #setup-screen {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 50px 32px 80px;
+  }
+
+  .setup-header { text-align: center; margin-bottom: 50px; }
+  .setup-header h1 {
+    font-family: var(--display);
+    font-size: clamp(56px, 9vw, 96px);
+    color: var(--gold);
+    letter-spacing: 0.04em;
+    line-height: 0.95;
+    text-shadow: 0 0 40px rgba(244, 197, 66, 0.3);
+  }
+  .setup-header .subtitle {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 20px;
+    margin-top: 8px;
+  }
+
+  .setup-section {
+    background: rgba(12, 23, 64, 0.6);
+    border-left: 3px solid var(--gold);
+    padding: 24px 28px;
+    margin-bottom: 24px;
+  }
+  .setup-section h2 {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    margin-bottom: 18px;
+  }
+  .setup-section[hidden] { display: none; }
+
+  #deck-info { margin-top: 16px; padding: 12px 16px; background: var(--bg-mid); border-left: 2px solid var(--gold-dim); }
+  #deck-info-name { font-weight: 600; font-size: 22px; color: var(--cream); }
+  #deck-info-desc { color: var(--text-dim); font-style: italic; margin-top: 4px; }
+  #deck-info-stats { color: var(--gold); font-family: var(--display); letter-spacing: 0.08em; margin-top: 8px; }
+
+  .deck-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+  }
+  .deck-option {
+    background: var(--bg-mid);
+    border: 1px solid var(--gold-dim);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .deck-option-title {
+    font-family: var(--display);
+    font-size: 20px;
+    letter-spacing: 0.06em;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+  .deck-option-desc {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 15px;
+    flex: 1;
+  }
+  .deck-option button, .deck-option input[type="file"] {
+    align-self: flex-start;
+  }
+
+  .select-actions { margin-bottom: 14px; display: flex; gap: 8px; }
+  .select-actions button { font-size: 14px; padding: 6px 12px; }
+
+  #category-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 8px 16px;
+  }
+  .cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    background: var(--bg-mid);
+    cursor: pointer;
+    transition: background 100ms;
+  }
+  .cat-row:hover { background: var(--bg-card); }
+  .cat-row label { cursor: pointer; flex: 1; user-select: none; }
+  .cat-row .cat-count { color: var(--text-dim); font-style: italic; font-size: 15px; }
+
+  .setting-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .setting-row label { min-width: 170px; font-weight: 600; }
+  .setting-help { color: var(--text-dim); font-style: italic; font-size: 15px; flex-basis: 100%; padding-left: 184px; margin-top: -4px; }
+
+  .player-row {
+    display: grid;
+    grid-template-columns: 32px 50px 1fr;
+    gap: 14px;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: var(--bg-mid);
+  }
+  .player-row .player-tag {
+    font-family: var(--display);
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+  .player-row input[type="text"] { width: 100%; }
+
+  #action-section { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  #setup-error {
+    color: var(--danger);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* ========== GAME SCREEN ========== */
+  #game-screen { display: flex; flex-direction: column; height: 100vh; }
+
+  .game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 28px;
+    background: rgba(12, 23, 64, 0.7);
+    border-bottom: 2px solid var(--gold-dim);
+  }
+  .game-header .round-info {
+    font-family: var(--display);
+    font-size: 28px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+  }
+  .save-warning {
+    display: inline-block;
+    margin-left: 14px;
+    font-family: var(--body);
+    font-size: 13px;
+    font-style: italic;
+    color: var(--danger);
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+  }
+  .game-actions { display: flex; gap: 10px; }
+
+  .game-main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 16px;
+    padding: 16px;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* Board */
+  #board {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 8px;
+    overflow: hidden;
+  }
+  .board-headers {
+    display: grid;
+    gap: 6px;
+  }
+  .col-header {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-mid) 100%);
+    border: 2px solid var(--gold);
+    padding: 12px 8px;
+    text-align: center;
+    font-family: var(--display);
+    font-size: clamp(15px, 1.4vw, 22px);
+    letter-spacing: 0.04em;
+    color: var(--gold);
+    line-height: 1.05;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    min-height: 70px;
+  }
+  .col-header.missed-col-header {
+    border-color: #c87455;
+    color: #ffb89c;
+    background: linear-gradient(180deg, #4a1f1f 0%, #2c1212 100%);
+  }
+  .cell.missed-cell:not(.used):not(.empty) {
+    border-color: rgba(200, 116, 85, 0.5);
+    color: #ffb89c;
+    text-shadow: 0 2px 8px rgba(200, 116, 85, 0.3);
+  }
+  .cell.missed-cell:not(.used):not(.empty):hover {
+    border-color: #c87455;
+    text-shadow: 0 2px 16px rgba(255, 184, 156, 0.6);
+  }
+  .board-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  .board-row {
+    display: grid;
+    gap: 6px;
+  }
+  .cell {
+    background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-mid) 100%);
+    border: 2px solid var(--gold-dim);
+    color: var(--gold);
+    font-family: var(--display);
+    font-size: clamp(28px, 3vw, 44px);
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    text-shadow: 0 2px 8px rgba(244, 197, 66, 0.3);
+  }
+  .cell:not(.used):hover {
+    background: linear-gradient(180deg, var(--bg-card-hover) 0%, var(--bg-card) 100%);
+    border-color: var(--gold);
+    transform: scale(1.02);
+    text-shadow: 0 2px 16px rgba(244, 197, 66, 0.6);
+  }
+  .cell.used {
+    background: var(--bg-card-used);
+    border-color: rgba(138, 110, 29, 0.3);
+    color: transparent;
+    cursor: default;
+    text-shadow: none;
+  }
+  .cell.empty {
+    background: transparent;
+    border: 2px dashed rgba(138, 110, 29, 0.2);
+    color: transparent;
+    cursor: default;
+  }
+
+  /* Score Panel (game screen only) */
+  #score-panel {
+    background: rgba(12, 23, 64, 0.6);
+    border-left: 3px solid var(--gold);
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .score-panel-title {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-align: center;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 8px;
+    margin-bottom: 4px;
+  }
+  .score-card {
+    background: var(--bg-mid);
+    border: 1px solid var(--gold-dim);
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+  }
+  .score-card .score-label {
+    font-family: var(--display);
+    font-size: 14px;
+    color: var(--gold);
+    letter-spacing: 0.08em;
+  }
+  .score-card .score-name {
+    font-family: var(--body);
+    font-size: 17px;
+    color: var(--cream);
+    margin-bottom: 4px;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  .score-card .score-name.empty { color: var(--text-dim); font-style: italic; }
+  .score-card .score-value {
+    font-family: var(--display);
+    font-size: 32px;
+    color: var(--gold-bright);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+  }
+  .score-card .score-value:hover { color: var(--cream); }
+  .score-card input.score-edit {
+    font-family: var(--display);
+    font-size: 28px;
+    background: var(--bg-deep);
+    color: var(--gold-bright);
+    border: 1px solid var(--gold);
+    padding: 2px 6px;
+    width: 100%;
+  }
+
+  /* ========== CARD VIEW (FULL SCREEN, JEOPARDY STYLE) ========== */
+  #card-view {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: var(--bg-deep);
+    background-image:
+      radial-gradient(ellipse at center, rgba(244, 197, 66, 0.12), transparent 70%),
+      radial-gradient(ellipse at top, rgba(28, 58, 138, 0.4), transparent 60%);
+  }
+  .card-stage {
+    flex: 1;
+    padding: 40px 60px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    min-height: 0;
+  }
+  .card-category-tag {
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0.1em;
+    color: var(--gold);
+    text-align: center;
+    border-bottom: 1px solid var(--gold-dim);
+    padding-bottom: 10px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .card-front, .card-back {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px 0;
+    animation: fadeIn 300ms ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card-title {
+    font-family: var(--display);
+    font-size: clamp(40px, 6vw, 84px);
+    letter-spacing: 0.03em;
+    color: var(--cream);
+    line-height: 1.05;
+    margin-bottom: 28px;
+    max-width: 1200px;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
+  }
+  .card-back .card-title { color: var(--gold); font-size: clamp(32px, 4.5vw, 60px); margin-bottom: 22px; }
+  .card-details {
+    list-style: none;
+    max-width: 1100px;
+    text-align: left;
+  }
+  .card-details li {
+    font-family: var(--body);
+    font-size: clamp(20px, 2vw, 28px);
+    line-height: 1.5;
+    padding: 8px 0 8px 32px;
+    position: relative;
+    color: var(--cream);
+  }
+  .card-details li::before {
+    content: '◆';
+    color: var(--gold);
+    position: absolute;
+    left: 6px;
+    font-size: 16px;
+    top: 16px;
+  }
+  .card-front .card-details li { font-style: italic; color: var(--text-dim); }
+  .card-front .card-details li::before { color: var(--gold-dim); }
+
+  .blank-word {
+    color: var(--gold-bright);
+    font-style: normal;
+    font-weight: bold;
+    padding: 0 4px;
+    text-shadow: 0 0 6px rgba(244, 197, 66, 0.4);
+  }
+
+  .card-actions {
+    margin-top: 36px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .score-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .score-buttons .player-btn {
+    min-width: 110px;
+    font-size: 20px;
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    line-height: 1;
+  }
+  .score-buttons .player-btn .pname {
+    font-size: 12px;
+    text-transform: none;
+    color: var(--text-dim);
+    letter-spacing: 0.04em;
+    font-family: var(--body);
+    font-style: italic;
+  }
+  .score-buttons .player-btn:hover .pname { color: var(--bg-deep); }
+  .score-buttons .nopoints-btn {
+    border-color: var(--text-dim);
+    color: var(--text-dim);
+  }
+  .score-buttons .nopoints-btn:hover {
+    background: var(--text-dim);
+    color: var(--bg-deep);
+  }
+
+  .kbd-hint {
+    color: var(--text-dim);
+    font-style: italic;
+    font-size: 13px;
+    font-family: var(--body);
+    margin-top: 8px;
+    letter-spacing: 0.02em;
+    opacity: 0.8;
+  }
+
+  /* ========== MODAL ========== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 10, 30, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  .modal {
+    background: var(--bg-mid);
+    border: 2px solid var(--gold);
+    padding: 32px 40px;
+    max-width: 560px;
+    text-align: center;
+  }
+  .modal.modal-wide {
+    max-width: 820px;
+    text-align: left;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-wide-body {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .modal h2 {
+    font-family: var(--display);
+    font-size: 36px;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    margin-bottom: 14px;
+  }
+  .modal-wide h2 { text-align: left; }
+  .modal h3 {
+    font-family: var(--display);
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.06em;
+    margin-top: 20px;
+    margin-bottom: 8px;
+  }
+  .modal p { margin-bottom: 12px; }
+  .modal ol, .modal ul { padding-left: 24px; margin-bottom: 12px; }
+  .modal li { margin-bottom: 6px; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+  .modal-wide .modal-actions { justify-content: flex-end; }
+  .modal-prompt-box {
+    background: var(--bg-deep);
+    border: 1px solid var(--gold-dim);
+    padding: 16px;
+    margin: 10px 0;
+    font-family: ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--cream);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .copy-prompt-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .copy-status {
+    color: var(--gold-bright);
+    font-style: italic;
+    font-size: 14px;
+  }
+  .winner-list {
+    list-style: none;
+    margin: 20px 0;
+    text-align: left;
+    max-width: 360px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .winner-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--bg-deep);
+    border-left: 2px solid var(--gold-dim);
+    margin-bottom: 4px;
+    font-size: 18px;
+  }
+  .winner-list li.winner {
+    border-left-color: var(--gold-bright);
+    background: rgba(244, 197, 66, 0.1);
+  }
+  .winner-list .wname { color: var(--cream); }
+  .winner-list .wscore { font-family: var(--display); font-size: 22px; color: var(--gold-bright); }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 900px) {
+    .game-main { grid-template-columns: 1fr; }
+    #score-panel { flex-direction: row; overflow-x: auto; max-height: 110px; }
+    .score-card { min-width: 130px; flex-shrink: 0; }
+    .card-stage { padding: 18px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== SETUP SCREEN ===================== -->
+<div id="setup-screen" class="screen">
+  <div class="setup-header">
+    <h1>Study Game</h1>
+    <p class="subtitle">A Jeopardy-style flashcard board for studying with friends.</p>
+  </div>
+
+  <section class="setup-section">
+    <h2>1. Get a Deck</h2>
+    <div class="deck-options">
+      <div class="deck-option">
+        <div class="deck-option-title">Load my deck</div>
+        <div class="deck-option-desc">Pick a JSON deck file from your computer.</div>
+        <input type="file" id="deck-file" accept=".json,application/json">
+      </div>
+      <div class="deck-option">
+        <div class="deck-option-title">Paste JSON</div>
+        <div class="deck-option-desc">Got JSON from an AI chatbot? Paste it directly — no need to save a file first.</div>
+        <button id="paste-deck-btn" class="secondary-btn">Paste Deck JSON</button>
+      </div>
+      <div class="deck-option">
+        <div class="deck-option-title">Try the sample</div>
+        <div class="deck-option-desc">Download a small example deck to see the format and play around with the game.</div>
+        <button id="download-sample-btn" class="secondary-btn">Download Sample Deck</button>
+      </div>
+      <div class="deck-option">
+        <div class="deck-option-title">Make one with AI</div>
+        <div class="deck-option-desc">Don't have a deck? Get a prompt you can paste into ChatGPT, Claude, or any AI to generate one from your notes.</div>
+        <button id="show-ai-prompt-btn" class="secondary-btn">Show AI Prompt &amp; Instructions</button>
+      </div>
+    </div>
+    <div id="deck-info" hidden>
+      <div id="deck-info-name"></div>
+      <div id="deck-info-desc"></div>
+      <div id="deck-info-stats"></div>
+    </div>
+  </section>
+
+  <section class="setup-section" id="category-section" hidden>
+    <h2>2. Select Categories</h2>
+    <div class="select-actions">
+      <button id="select-all-btn" class="secondary-btn">Select All</button>
+      <button id="select-none-btn" class="secondary-btn">None</button>
+    </div>
+    <div id="category-list"></div>
+  </section>
+
+  <section class="setup-section" id="settings-section" hidden>
+    <h2>3. Game Settings</h2>
+    <div class="setting-row">
+      <label for="num-rounds">Number of rounds:</label>
+      <input type="number" id="num-rounds" min="1" max="20" value="1" style="width: 80px;">
+      <div class="setting-help">More rounds = use more of the material. Cards don't repeat across rounds.</div>
+    </div>
+    <div class="setting-row">
+      <label for="max-cols">Max columns per round:</label>
+      <input type="number" id="max-cols" min="1" max="8" value="8" style="width: 80px;">
+      <div class="setting-help">Caps how many categories appear per round, drawn randomly from your selection. 8 = traditional Jeopardy board.</div>
+    </div>
+    <div class="setting-row">
+      <label for="max-rows">Max rows per round:</label>
+      <input type="number" id="max-rows" min="1" max="12" value="8" style="width: 80px;">
+      <div class="setting-help">Caps how many cards each column shows. Short categories stay short — the board can be ragged.</div>
+    </div>
+    <div class="setting-row">
+      <label for="front-mode">Front of card shows:</label>
+      <select id="front-mode">
+        <option value="title_only">Title only (hardest)</option>
+        <option value="half_bullets">Title + half the bullets (random)</option>
+        <option value="blanks">Fill in the blanks (random words hidden)</option>
+      </select>
+    </div>
+    <div class="setting-row" id="blank-amount-row" hidden>
+      <label for="blank-amount">Words to blank:</label>
+      <input type="range" id="blank-amount" min="10" max="80" value="30" step="5" style="flex: 1; max-width: 240px;">
+      <span id="blank-amount-value" style="font-family: var(--display); font-size: 22px; color: var(--gold); min-width: 50px;">30%</span>
+      <div class="setting-help">10% = a few hints missing · 80% = mostly blanks. Stop words and short words are never blanked.</div>
+    </div>
+    <div class="setting-row">
+      <label for="points-per-card">Points per card:</label>
+      <input type="number" id="points-per-card" min="1" max="9999" value="100" style="width: 100px;">
+    </div>
+    <div class="setting-row">
+      <label for="recycle-missed">Recycle missed cards:</label>
+      <input type="checkbox" id="recycle-missed" checked>
+      <div class="setting-help">When ON, cards marked No Points come back as a "♻ Missed Cards" column in later rounds (when the round has fewer than 8 columns).</div>
+    </div>
+  </section>
+
+  <section class="setup-section" id="player-section" hidden>
+    <h2>4. Players</h2>
+    <p style="color: var(--text-dim); font-style: italic; margin-bottom: 14px;">
+      Check the box to enable a player slot. Names are optional — leave blank to just use P1, P2, etc.
+    </p>
+    <div id="player-list"></div>
+  </section>
+
+  <section class="setup-section" id="action-section" hidden>
+    <button id="start-game-btn" class="primary-btn">Start Game →</button>
+    <button id="cheat-sheet-setup-btn" class="secondary-btn" disabled title="Generate the game first to see the cheat sheet for round 1">Open Host Cheat Sheet</button>
+    <div id="setup-error"></div>
+  </section>
+</div>
+
+<!-- ===================== GAME SCREEN ===================== -->
+<div id="game-screen" class="screen" hidden>
+  <header class="game-header">
+    <div class="round-info">
+      Round <span id="current-round-num">1</span> of <span id="total-rounds-num">1</span>
+      <span id="save-warning" class="save-warning" hidden></span>
+    </div>
+    <div class="game-actions">
+      <button id="undo-btn" class="secondary-btn" disabled title="Undo last award (Ctrl+Z)">↶ Undo</button>
+      <button id="cheat-sheet-game-btn" class="secondary-btn">Cheat Sheet</button>
+      <button id="next-round-btn" hidden>Next Round →</button>
+      <button id="end-game-btn" class="danger-btn">End Game</button>
+    </div>
+  </header>
+  <main class="game-main">
+    <div id="board"></div>
+    <aside id="score-panel"></aside>
+  </main>
+</div>
+
+<!-- ===================== CARD VIEW (FULL SCREEN) ===================== -->
+<div id="card-view" class="screen" hidden>
+  <div class="card-stage">
+    <div class="card-category-tag" id="card-category"></div>
+    <div id="card-side"></div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ============================================================
+// AI DECK-GENERATION PROMPT (shared with the OCR companion tool)
+// Paste this prompt into any LLM along with raw notes/text.
+// ============================================================
+const DECK_GENERATION_PROMPT = `You are converting study notes into a JSON deck for a Jeopardy-style flashcard study game.
+
+Output STRICT JSON ONLY — no markdown fences, no commentary before or after. The output must be valid JSON parseable by JSON.parse().
+
+Schema:
+{
+  "schema_version": 1,
+  "deck_name": "<short descriptive name for the deck>",
+  "description": "<one-sentence summary of what's in it>",
+  "categories": [
+    {
+      "name": "<short category name, 1-4 words>",
+      "cards": [
+        {
+          "title": "<the prompt: a topic, term, or question — what's shown to the player on the front>",
+          "details": ["<bullet point>", "<bullet point>", "..."]
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Group the source material into 4-12 categories of related topics. Don't make one giant category.
+- Each category should have 2-10 cards. Aim for similar size across categories where possible.
+- Each card has a title (the prompt — usually a topic name, person, term, concept, or question) and details (the answer — a list of bullet points).
+- Keep titles short and recognizable.
+- Keep each detail bullet short — one fact, one phrase, or one short sentence per bullet. 1-12 bullets per card is ideal. Avoid full paragraphs.
+- Strip URLs, image references, and references to slide numbers.
+- Use the source's own wording where possible — don't paraphrase aggressively.
+- Don't invent facts not in the source.
+- If the source has nested sub-bullets, flatten them into a single details array.
+
+The user's source material follows below. Convert it.
+
+---
+
+`;
+
+// Small example deck for "Download Sample"
+const SAMPLE_DECK = {
+  schema_version: 1,
+  deck_name: "Sample: World Geography",
+  description: "A small example deck to demonstrate the format.",
+  categories: [
+    {
+      name: "Capital Cities",
+      cards: [
+        { title: "France", details: ["Paris", "On the river Seine", "Population about 2.1 million"] },
+        { title: "Japan", details: ["Tokyo", "Located on Honshu island", "World's most populous metropolitan area"] },
+        { title: "Australia", details: ["Canberra", "Not Sydney — common misconception", "Purpose-built capital, founded 1913"] },
+        { title: "Brazil", details: ["Brasília", "Planned city, inaugurated 1960", "UNESCO World Heritage Site"] }
+      ]
+    },
+    {
+      name: "Mountains",
+      cards: [
+        { title: "Mount Everest", details: ["Tallest mountain on Earth", "8,849 meters (29,032 feet)", "On the Nepal–China border", "Part of the Himalayas"] },
+        { title: "Mount Kilimanjaro", details: ["Tallest mountain in Africa", "Located in Tanzania", "Dormant volcano with three cones"] },
+        { title: "The Andes", details: ["Longest continental mountain range", "Runs along western South America", "About 7,000 km long"] }
+      ]
+    },
+    {
+      name: "Rivers",
+      cards: [
+        { title: "The Nile", details: ["Longest river in Africa", "Flows north", "Empties into the Mediterranean Sea"] },
+        { title: "The Amazon", details: ["Largest river by discharge volume", "Flows through Brazil, Peru, and Colombia", "Empties into the Atlantic Ocean"] },
+        { title: "The Mississippi", details: ["Major river in the United States", "Flows from Minnesota to the Gulf of Mexico", "Drains 31 US states and 2 Canadian provinces"] }
+      ]
+    },
+    {
+      name: "Oceans",
+      cards: [
+        { title: "Pacific Ocean", details: ["Largest ocean", "Covers about 30% of Earth's surface", "Contains the Mariana Trench — deepest known point"] },
+        { title: "Atlantic Ocean", details: ["Second-largest ocean", "Separates the Americas from Europe and Africa", "Contains the Mid-Atlantic Ridge"] },
+        { title: "Arctic Ocean", details: ["Smallest and shallowest ocean", "Covered by sea ice for much of the year", "Surrounds the North Pole"] }
+      ]
+    }
+  ]
+};
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  deck: null,
+  config: {
+    selectedCategoryIndices: [],
+    numRounds: 1,
+    frontMode: 'title_only',
+    blankPercent: 30,
+    pointsPerCard: 100,
+    maxColumns: 8,
+    maxRows: 8,
+    recycleMissed: true,
+    activePlayers: [true, true, false, false, false],
+    playerNames: ['', '', '', '', ''],
+  },
+  game: {
+    rounds: [],          // [{cols: [{categoryIdx?, isMissedColumn?, cards: [...]}], prepared: bool}]
+    roundsValid: false,  // true when rounds match current settings
+    currentRound: 0,
+    usedCells: {},       // "round:col:row" -> true
+    currentCell: null,   // {round, col, row}
+    cardFlipped: false,
+    scores: [0, 0, 0, 0, 0],
+    missedQueue: [],     // cells (categoryIdx + cardIdx + reveal info) waiting to recycle
+    undoStack: [],       // array of action snapshots (last 20); each describes how to reverse a single award
+  },
+};
+
+// ============================================================
+// UTILITIES
+// ============================================================
+const $ = (id) => document.getElementById(id);
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showScreen(name) {
+  ['setup-screen', 'game-screen', 'card-view'].forEach(id => {
+    $(id).hidden = (id !== name);
+  });
+}
+
+function escapeHTML(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function cellKey(round, col, row) { return `${round}:${col}:${row}`; }
+
+// ============================================================
+// AUTO-SAVE / RESUME (localStorage)
+// ============================================================
+const STORAGE_KEY = 'study_game_save_v1';
+
+// Save the in-progress game so a refresh or accidental close doesn't wipe it.
+// Called after every meaningful state change once the game is running.
+function saveProgress() {
+  try {
+    const payload = {
+      savedAt: Date.now(),
+      deck: state.deck,
+      config: state.config,
+      game: {
+        rounds: state.game.rounds,
+        roundsValid: state.game.roundsValid,
+        currentRound: state.game.currentRound,
+        usedCells: state.game.usedCells,
+        scores: state.game.scores,
+        missedQueue: state.game.missedQueue,
+        undoStack: state.game.undoStack,
+      },
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    // If a previous save warning was up, clear it now
+    const warn = $('save-warning');
+    if (warn && !warn.hidden) { warn.hidden = true; warn.textContent = ''; }
+  } catch (e) {
+    // localStorage can fail (quota exceeded, private browsing, etc.)
+    console.warn('Could not save progress:', e);
+    const warn = $('save-warning');
+    if (warn) {
+      const msg = (e && e.name === 'QuotaExceededError')
+        ? '⚠ Auto-save failed — deck too large for browser storage'
+        : '⚠ Auto-save failed — refresh-resume may not work';
+      warn.textContent = msg;
+      warn.hidden = false;
+      warn.title = 'The game will continue, but your progress is not being saved. If you refresh, you will lose your scores.';
+    }
+  }
+}
+
+function clearProgress() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+}
+
+// Returns the saved payload if a valid game-in-progress exists, otherwise null.
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const payload = JSON.parse(raw);
+    // Sanity-check the shape — if anything's off, treat as no save
+    if (!payload || !payload.deck || !payload.config || !payload.game) return null;
+    if (!Array.isArray(payload.game.rounds) || payload.game.rounds.length === 0) return null;
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
+
+function resumeFromPayload(payload) {
+  state.deck = payload.deck;
+  state.config = Object.assign({}, state.config, payload.config); // merge in case schema added fields
+  state.game.rounds = payload.game.rounds;
+  state.game.roundsValid = payload.game.roundsValid !== false;
+  state.game.currentRound = payload.game.currentRound || 0;
+  state.game.usedCells = payload.game.usedCells || {};
+  state.game.scores = payload.game.scores || [0, 0, 0, 0, 0];
+  state.game.missedQueue = payload.game.missedQueue || [];
+  state.game.undoStack = payload.game.undoStack || [];
+  state.game.currentCell = null;
+  state.game.cardFlipped = false;
+  showScreen('game-screen');
+  renderGame();
+}
+
+// Show the "Resume game?" modal on page load if there's a saved game.
+function maybeOfferResume() {
+  const payload = loadProgress();
+  if (!payload) return;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const savedDate = new Date(payload.savedAt);
+  const deckName = payload.deck.deck_name || 'Unknown deck';
+  const round = (payload.game.currentRound || 0) + 1;
+  const totalRounds = payload.game.rounds.length;
+  const totalScore = (payload.game.scores || []).reduce((a, b) => a + b, 0);
+
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>Resume Game?</h2>
+      <p>You have a game in progress:</p>
+      <p style="font-style: italic; color: var(--cream);">
+        <strong>${escapeHTML(deckName)}</strong><br>
+        Round ${round} of ${totalRounds} · Combined score: ${totalScore}<br>
+        <span style="color: var(--text-dim); font-size: 14px;">Saved ${savedDate.toLocaleString()}</span>
+      </p>
+      <div class="modal-actions">
+        <button class="primary-btn" id="resume-yes">Resume</button>
+        <button class="secondary-btn danger-btn" id="resume-no">Discard &amp; Start Fresh</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  $('resume-yes').addEventListener('click', () => {
+    overlay.remove();
+    resumeFromPayload(payload);
+  });
+  $('resume-no').addEventListener('click', () => {
+    overlay.remove();
+    clearProgress();
+  });
+}
+
+// Words too common to blank out — blanking these doesn't test anything.
+const STOP_WORDS = new Set([
+  'the','a','an','and','or','but','of','to','in','on','at','by','for','from',
+  'with','as','is','are','was','were','be','been','being','has','have','had',
+  'do','does','did','will','would','could','should','may','might','must','can',
+  'this','that','these','those','it','its','he','she','his','her','him','they',
+  'them','their','we','us','our','you','your','i','me','my','what','which',
+  'who','whom','whose','when','where','why','how','all','any','some','every',
+  'no','not','very','more','most','less','also','only','just','even','so','than',
+  'then','now','yes','if','because','through','during','about','into','onto',
+  'over','under','out','off','up','down','one','many','much','few','other',
+  'others','same','such','each','either','neither','both','via','etc','ie','eg',
+]);
+
+// Replace ~30% of content words in a string with blank placeholders (4+ underscores).
+// Skips whitespace, stop words, and words shorter than 3 chars. Won't blank
+// anything if the bullet has fewer than 3 candidate words (protects short bullets).
+function generateBlanks(text) {
+  // Tokenize, preserving whitespace
+  const tokens = text.split(/(\s+)/);
+  const blankableIndices = [];
+  tokens.forEach((tok, i) => {
+    if (/^\s*$/.test(tok)) return;
+    // Get the alphabetic core of the token (strips punctuation and numbers)
+    const m = tok.match(/[A-Za-z][A-Za-z'-]*/);
+    if (!m) return;
+    const word = m[0];
+    if (word.length < 3) return;
+    if (STOP_WORDS.has(word.toLowerCase())) return;
+    blankableIndices.push(i);
+  });
+
+  // Don't blank anything if there's too little to work with
+  if (blankableIndices.length < 3) return text;
+
+  const fraction = (state.config.blankPercent || 30) / 100;
+  const numToBlank = Math.max(1, Math.round(blankableIndices.length * fraction));
+  const picked = new Set(shuffle(blankableIndices).slice(0, numToBlank));
+
+  return tokens.map((tok, i) => {
+    if (!picked.has(i)) return tok;
+    // Replace the alphabetic core with underscores; preserve surrounding punctuation
+    return tok.replace(/[A-Za-z][A-Za-z'-]*/, match =>
+      '_'.repeat(Math.max(5, match.length))
+    );
+  }).join('');
+}
+
+// ============================================================
+// DECK LOADING & VALIDATION
+// ============================================================
+function validateDeck(d) {
+  const errors = [];
+  if (!d || typeof d !== 'object' || Array.isArray(d)) {
+    errors.push('File is not a JSON object.');
+    return errors;
+  }
+  if (d.schema_version !== 1) errors.push(`schema_version must be 1 (got ${d.schema_version}).`);
+  if (typeof d.deck_name !== 'string' || !d.deck_name.trim()) errors.push('deck_name is required.');
+  if (d.description !== undefined && typeof d.description !== 'string') {
+    errors.push('description, if present, must be a string.');
+  }
+  if (!Array.isArray(d.categories) || d.categories.length === 0) {
+    errors.push('categories must be a non-empty array.');
+  } else {
+    d.categories.forEach((c, i) => {
+      if (!c || typeof c !== 'object') {
+        errors.push(`Category ${i}: must be an object.`);
+        return;
+      }
+      if (!c.name || typeof c.name !== 'string') errors.push(`Category ${i}: name is required and must be a string.`);
+      if (!Array.isArray(c.cards) || c.cards.length === 0) {
+        errors.push(`Category ${i} (${c.name || ''}): cards must be a non-empty array.`);
+      } else {
+        c.cards.forEach((card, j) => {
+          if (!card || typeof card !== 'object') {
+            errors.push(`Category ${i} card ${j}: must be an object.`);
+            return;
+          }
+          if (!card.title || typeof card.title !== 'string') errors.push(`Category ${i} card ${j}: title is required and must be a string.`);
+          if (!Array.isArray(card.details)) {
+            errors.push(`Category ${i} card ${j}: details must be an array.`);
+          } else {
+            card.details.forEach((d, k) => {
+              if (typeof d !== 'string') {
+                errors.push(`Category ${i} card ${j} detail ${k}: each detail must be a string.`);
+              }
+            });
+          }
+        });
+      }
+    });
+  }
+  return errors;
+}
+
+// Shared loader: parses, validates, and installs a deck from a JSON text string.
+// Returns true on success, false on failure (with errors written to setup-error).
+// Used by both file upload and paste-JSON flows.
+function loadDeckFromText(jsonText, sourceLabel) {
+  let d;
+  try {
+    d = JSON.parse(jsonText);
+  } catch (err) {
+    $('setup-error').textContent = `Could not parse JSON${sourceLabel ? ' from ' + sourceLabel : ''}: ${err.message}`;
+    return false;
+  }
+  const errors = validateDeck(d);
+  if (errors.length) {
+    $('setup-error').textContent = 'Invalid deck: ' + errors.join(' ');
+    return false;
+  }
+  state.deck = d;
+  state.config.selectedCategoryIndices = d.categories.map((_, i) => i);
+  onDeckLoaded();
+  return true;
+}
+
+function handleDeckFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => loadDeckFromText(evt.target.result, 'file');
+  reader.readAsText(file);
+}
+
+function onDeckLoaded() {
+  const d = state.deck;
+  $('setup-error').textContent = '';
+  $('deck-info').hidden = false;
+  $('deck-info-name').textContent = d.deck_name;
+  $('deck-info-desc').textContent = d.description || '';
+  const totalCards = d.categories.reduce((s, c) => s + c.cards.length, 0);
+  $('deck-info-stats').textContent = `${d.categories.length} categories · ${totalCards} cards`;
+  renderCategoryList();
+  renderPlayerList();
+  $('category-section').hidden = false;
+  $('settings-section').hidden = false;
+  $('player-section').hidden = false;
+  $('action-section').hidden = false;
+  $('cheat-sheet-setup-btn').disabled = false;
+  $('cheat-sheet-setup-btn').title = '';
+  invalidateRounds();
+}
+
+// ============================================================
+// SETUP SCREEN
+// ============================================================
+function renderCategoryList() {
+  const list = $('category-list');
+  list.innerHTML = '';
+  state.deck.categories.forEach((cat, i) => {
+    const row = document.createElement('div');
+    row.className = 'cat-row';
+    row.innerHTML = `
+      <input type="checkbox" id="cat-${i}" ${state.config.selectedCategoryIndices.includes(i) ? 'checked' : ''}>
+      <label for="cat-${i}">${escapeHTML(cat.name)}</label>
+      <span class="cat-count">${cat.cards.length} cards</span>
+    `;
+    row.querySelector('input').addEventListener('change', (e) => {
+      if (e.target.checked) {
+        if (!state.config.selectedCategoryIndices.includes(i)) state.config.selectedCategoryIndices.push(i);
+      } else {
+        state.config.selectedCategoryIndices = state.config.selectedCategoryIndices.filter(x => x !== i);
+      }
+      invalidateRounds();
+    });
+    list.appendChild(row);
+  });
+}
+
+function renderPlayerList() {
+  const list = $('player-list');
+  list.innerHTML = '';
+  for (let i = 0; i < 5; i++) {
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    row.innerHTML = `
+      <input type="checkbox" id="p-active-${i}" ${state.config.activePlayers[i] ? 'checked' : ''}>
+      <span class="player-tag">P${i + 1}</span>
+      <input type="text" id="p-name-${i}" placeholder="Name (optional)" value="${escapeHTML(state.config.playerNames[i])}">
+    `;
+    row.querySelector(`#p-active-${i}`).addEventListener('change', (e) => {
+      state.config.activePlayers[i] = e.target.checked;
+    });
+    row.querySelector(`#p-name-${i}`).addEventListener('input', (e) => {
+      state.config.playerNames[i] = e.target.value;
+    });
+    list.appendChild(row);
+  }
+}
+
+function readSettingsFromUI() {
+  state.config.numRounds = Math.max(1, parseInt($('num-rounds').value, 10) || 1);
+  state.config.frontMode = $('front-mode').value;
+  state.config.blankPercent = Math.max(10, Math.min(80, parseInt($('blank-amount').value, 10) || 30));
+  state.config.pointsPerCard = Math.max(1, parseInt($('points-per-card').value, 10) || 100);
+  state.config.maxColumns = Math.max(1, Math.min(8, parseInt($('max-cols').value, 10) || 8));
+  state.config.maxRows = Math.max(1, Math.min(12, parseInt($('max-rows').value, 10) || 8));
+  state.config.recycleMissed = $('recycle-missed').checked;
+}
+
+function startGame() {
+  readSettingsFromUI();
+  if (state.config.selectedCategoryIndices.length === 0) {
+    $('setup-error').textContent = 'Please select at least one category.';
+    return;
+  }
+  if (!state.config.activePlayers.some(x => x)) {
+    $('setup-error').textContent = 'Please enable at least one player.';
+    return;
+  }
+  $('setup-error').textContent = '';
+  if (!state.game.roundsValid) generateRounds();
+  state.game.currentRound = 0;
+  state.game.usedCells = {};
+  state.game.scores = [0, 0, 0, 0, 0];
+  state.game.missedQueue = [];
+  state.game.undoStack = [];
+  state.game.rounds.forEach(r => r.prepared = false);
+  saveProgress();
+  showScreen('game-screen');
+  renderGame();
+}
+
+function openCheatSheetFromSetup() {
+  readSettingsFromUI();
+  if (state.config.selectedCategoryIndices.length === 0) {
+    $('setup-error').textContent = 'Please select at least one category.';
+    return;
+  }
+  $('setup-error').textContent = '';
+  if (!state.game.roundsValid) generateRounds();
+  openCheatSheet();
+}
+
+// ============================================================
+// ROUND GENERATION
+// ============================================================
+function pickRevealedDetails(card) {
+  const n = card.details.length;
+  const mode = state.config.frontMode;
+  if (mode === 'title_only' || n === 0) return [];
+  if (mode === 'half_bullets') {
+    const half = Math.max(1, Math.floor(n / 2));
+    const indices = shuffle([...Array(n).keys()]).slice(0, half).sort((a, b) => a - b);
+    return indices;
+  }
+  if (mode === 'blanks') {
+    return [...Array(n).keys()]; // show all bullets — they'll have blanks
+  }
+  return [];
+}
+
+function pickBlankedDetails(card) {
+  if (state.config.frontMode !== 'blanks') return null;
+  return card.details.map(d => generateBlanks(d));
+}
+
+function generateRounds() {
+  // Pool of remaining cards per category
+  const pool = state.config.selectedCategoryIndices.map(catIdx => ({
+    catIdx,
+    remaining: shuffle([...Array(state.deck.categories[catIdx].cards.length).keys()]),
+  }));
+
+  const maxCols = state.config.maxColumns;
+  const maxRows = state.config.maxRows;
+
+  const rounds = [];
+  for (let r = 0; r < state.config.numRounds; r++) {
+    const eligible = pool.filter(p => p.remaining.length > 0);
+    if (eligible.length === 0) break;
+    const picked = shuffle(eligible).slice(0, maxCols);
+    const cols = picked.map(p => {
+      const cardIndices = p.remaining.splice(0, maxRows);
+      const card_objs = state.deck.categories[p.catIdx].cards;
+      return {
+        categoryIdx: p.catIdx,
+        isMissedColumn: false,
+        cards: cardIndices.map(ci => ({
+          categoryIdx: p.catIdx,
+          cardIdx: ci,
+          revealedDetailIndices: pickRevealedDetails(card_objs[ci]),
+          blankedDetails: pickBlankedDetails(card_objs[ci]),
+        })),
+      };
+    });
+    rounds.push({ cols, prepared: false });
+  }
+  state.game.rounds = rounds;
+  state.game.roundsValid = true;
+}
+
+// Add the missed-cards column when this round is reached, if conditions allow.
+// Idempotent — running it twice on the same round does nothing on the second call.
+function ensureRoundPrepared(roundIdx) {
+  const round = state.game.rounds[roundIdx];
+  if (!round || round.prepared) return;
+  round.prepared = true;
+  if (roundIdx === 0) return;                              // never on round 1
+  if (!state.config.recycleMissed) return;
+  if (state.game.missedQueue.length === 0) return;
+  if (round.cols.length >= state.config.maxColumns) return; // no room
+  const cards = state.game.missedQueue.splice(0, state.config.maxRows);
+  round.cols.push({
+    isMissedColumn: true,
+    cards: cards,
+  });
+}
+
+// ============================================================
+// GAME SCREEN RENDERING
+// ============================================================
+function renderGame() {
+  ensureRoundPrepared(state.game.currentRound);
+  $('current-round-num').textContent = state.game.currentRound + 1;
+  $('total-rounds-num').textContent = state.game.rounds.length;
+  renderBoard();
+  renderScorePanel($('score-panel'));
+  updateNextRoundBtn();
+  updateUndoBtn();
+}
+
+function updateUndoBtn() {
+  const btn = $('undo-btn');
+  if (!btn) return;
+  const hasUndo = state.game.undoStack.length > 0;
+  btn.disabled = !hasUndo;
+  if (hasUndo) {
+    const last = state.game.undoStack[state.game.undoStack.length - 1];
+    const playerLabel = last.playerIdx >= 0
+      ? (state.config.playerNames[last.playerIdx].trim() || `P${last.playerIdx + 1}`)
+      : 'No Points';
+    btn.title = `Undo last award (${playerLabel})`;
+  } else {
+    btn.title = 'Nothing to undo';
+  }
+}
+
+function renderBoard() {
+  const board = $('board');
+  const round = state.game.rounds[state.game.currentRound];
+  if (!round) { board.innerHTML = '<p style="color:var(--text-dim);text-align:center;padding:40px;font-style:italic;">No cards remaining.</p>'; return; }
+
+  const numCols = round.cols.length;
+  const maxRows = Math.max(...round.cols.map(c => c.cards.length));
+
+  let html = '<div class="board-headers" style="grid-template-columns: repeat(' + numCols + ', 1fr);">';
+  round.cols.forEach(col => {
+    const headerName = col.isMissedColumn
+      ? '♻ Missed Cards'
+      : state.deck.categories[col.categoryIdx].name;
+    const extraClass = col.isMissedColumn ? ' missed-col-header' : '';
+    html += `<div class="col-header${extraClass}">${escapeHTML(headerName)}</div>`;
+  });
+  html += '</div>';
+
+  html += '<div class="board-grid">';
+  for (let row = 0; row < maxRows; row++) {
+    html += `<div class="board-row" style="grid-template-columns: repeat(${numCols}, 1fr);">`;
+    for (let col = 0; col < numCols; col++) {
+      if (row < round.cols[col].cards.length) {
+        const used = state.game.usedCells[cellKey(state.game.currentRound, col, row)];
+        const missedClass = round.cols[col].isMissedColumn ? ' missed-cell' : '';
+        html += `<div class="cell${missedClass} ${used ? 'used' : ''}" data-col="${col}" data-row="${row}">${state.config.pointsPerCard}</div>`;
+      } else {
+        html += '<div class="cell empty"></div>';
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  board.innerHTML = html;
+
+  board.querySelectorAll('.cell:not(.used):not(.empty)').forEach(cellEl => {
+    cellEl.addEventListener('click', () => {
+      const col = parseInt(cellEl.dataset.col, 10);
+      const row = parseInt(cellEl.dataset.row, 10);
+      showCard(col, row);
+    });
+  });
+}
+
+function renderScorePanel(container) {
+  container.innerHTML = '<div class="score-panel-title">Scores</div>';
+  for (let i = 0; i < 5; i++) {
+    if (!state.config.activePlayers[i]) continue;
+    const name = state.config.playerNames[i].trim();
+    const card = document.createElement('div');
+    card.className = 'score-card';
+    card.innerHTML = `
+      <div class="score-label">P${i + 1}</div>
+      <div class="score-name ${name ? '' : 'empty'}">${name ? escapeHTML(name) : '(no name)'}</div>
+      <div class="score-value" data-player="${i}" title="Click to edit">${state.game.scores[i]}</div>
+    `;
+    card.querySelector('.score-value').addEventListener('click', (e) => editScore(i, e.target));
+    container.appendChild(card);
+  }
+}
+
+function editScore(playerIdx, valueEl) {
+  const current = state.game.scores[playerIdx];
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.className = 'score-edit';
+  input.value = current;
+  valueEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  function commit() {
+    const v = parseInt(input.value, 10);
+    state.game.scores[playerIdx] = isNaN(v) ? current : v;
+    saveProgress();
+    rerenderScores();
+  }
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') input.blur();
+    if (e.key === 'Escape') { input.value = current; input.blur(); }
+  });
+}
+
+function rerenderScores() {
+  if (!$('game-screen').hidden) renderScorePanel($('score-panel'));
+}
+
+function updateNextRoundBtn() {
+  const round = state.game.rounds[state.game.currentRound];
+  const hasNext = state.game.currentRound < state.game.rounds.length - 1;
+  // Show Next Round button always if there's a next round; primary appearance when current round is done
+  if (hasNext) {
+    $('next-round-btn').hidden = false;
+    if (isRoundComplete()) {
+      $('next-round-btn').classList.add('primary-btn');
+    } else {
+      $('next-round-btn').classList.remove('primary-btn');
+    }
+  } else {
+    $('next-round-btn').hidden = true;
+  }
+}
+
+function isRoundComplete() {
+  const round = state.game.rounds[state.game.currentRound];
+  if (!round) return true;
+  for (let c = 0; c < round.cols.length; c++) {
+    for (let r = 0; r < round.cols[c].cards.length; r++) {
+      if (!state.game.usedCells[cellKey(state.game.currentRound, c, r)]) return false;
+    }
+  }
+  return true;
+}
+
+function nextRound() {
+  if (state.game.currentRound < state.game.rounds.length - 1) {
+    state.game.currentRound++;
+    // Undo is round-scoped: missed cards from earlier rounds may now be embedded
+    // in the new round's structure, so the undo stack would point at stale state.
+    state.game.undoStack = [];
+    saveProgress();
+    renderGame();
+  }
+}
+
+// ============================================================
+// CARD VIEW
+// ============================================================
+function showCard(col, row) {
+  state.game.currentCell = { round: state.game.currentRound, col, row };
+  state.game.cardFlipped = false;
+  renderCardView();
+  showScreen('card-view');
+}
+
+function getCurrentCard() {
+  if (!state.game.currentCell) return null;
+  const { round, col, row } = state.game.currentCell;
+  const colCfg = state.game.rounds[round].cols[col];
+  const cellInfo = colCfg.cards[row];
+  const catIdx = cellInfo.categoryIdx;
+  const card = state.deck.categories[catIdx].cards[cellInfo.cardIdx];
+  const catName = state.deck.categories[catIdx].name;
+  return {
+    card,
+    catName,
+    revealed: cellInfo.revealedDetailIndices,
+    blanked: cellInfo.blankedDetails,
+    isMissed: !!colCfg.isMissedColumn,
+  };
+}
+
+function renderCardView() {
+  const cardData = getCurrentCard();
+  if (!cardData) return; // defensive: bail if currentCell got cleared
+  const { card, catName, revealed, blanked, isMissed } = cardData;
+  const categoryLabel = isMissed
+    ? `♻ MISSED · ${catName} — ${state.config.pointsPerCard} pts`
+    : `${catName} — ${state.config.pointsPerCard} pts`;
+  $('card-category').textContent = categoryLabel;
+  const side = $('card-side');
+
+  if (!state.game.cardFlipped) {
+    let detailsHTML = '';
+    if (revealed.length > 0) {
+      detailsHTML = '<ul class="card-details">' +
+        revealed.map(i => {
+          // In blanks mode, show the blanked version; otherwise show the original
+          const text = blanked ? blanked[i] : card.details[i];
+          // Escape HTML, then wrap blank placeholders in styled spans
+          const safe = escapeHTML(text).replace(/_{4,}/g, m => `<span class="blank-word">${m}</span>`);
+          return `<li>${safe}</li>`;
+        }).join('') +
+        '</ul>';
+    }
+    side.innerHTML = `
+      <div class="card-front">
+        <h1 class="card-title">${escapeHTML(card.title)}</h1>
+        ${detailsHTML}
+        <div class="card-actions">
+          <button class="primary-btn" id="flip-btn">Flip to Answer →</button>
+          <button class="secondary-btn" id="back-to-board-btn">← Back to Board</button>
+          <p class="kbd-hint">Space to flip · Esc to go back</p>
+        </div>
+      </div>
+    `;
+    $('flip-btn').addEventListener('click', flipCard);
+    $('back-to-board-btn').addEventListener('click', backToBoard);
+  } else {
+    const detailsHTML = card.details.length > 0
+      ? '<ul class="card-details">' + card.details.map(d => `<li>${escapeHTML(d)}</li>`).join('') + '</ul>'
+      : '';
+    let scoreBtnsHTML = '';
+    for (let i = 0; i < 5; i++) {
+      if (!state.config.activePlayers[i]) continue;
+      const name = state.config.playerNames[i].trim();
+      scoreBtnsHTML += `<button class="player-btn" data-player="${i}">P${i + 1}${name ? `<span class="pname">${escapeHTML(name)}</span>` : ''}</button>`;
+    }
+    scoreBtnsHTML += `<button class="player-btn nopoints-btn" data-player="-1">${state.config.recycleMissed ? '♻ ' : ''}No Points</button>`;
+
+    side.innerHTML = `
+      <div class="card-back">
+        <h1 class="card-title">${escapeHTML(card.title)}</h1>
+        ${detailsHTML}
+        <div class="card-actions">
+          <p style="color: var(--text-dim); font-style: italic; font-family: var(--body); font-size: 17px;">Award ${state.config.pointsPerCard} points to:</p>
+          <div class="score-buttons">${scoreBtnsHTML}</div>
+          <p class="kbd-hint">Press 1–5 for player · 0 for No Points · Esc to go back</p>
+        </div>
+      </div>
+    `;
+    side.querySelectorAll('.player-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const p = parseInt(btn.dataset.player, 10);
+        awardPoints(p);
+      });
+    });
+  }
+}
+
+function flipCard() {
+  state.game.cardFlipped = true;
+  renderCardView();
+}
+
+function backToBoard() {
+  state.game.currentCell = null;
+  showScreen('game-screen');
+  renderGame();
+}
+
+function awardPoints(playerIdx) {
+  if (!state.game.currentCell) return; // already processed, ignore double-clicks
+  const { round, col, row } = state.game.currentCell;
+  const undoAction = {
+    round, col, row,
+    playerIdx,                          // -1 for No Points, otherwise 0-4
+    pointsAwarded: state.config.pointsPerCard,
+    pushedToMissedQueue: false,         // set true if we appended to missedQueue
+  };
+  if (playerIdx >= 0) {
+    state.game.scores[playerIdx] += state.config.pointsPerCard;
+  } else if (state.config.recycleMissed) {
+    // Mark as missed: push the cell's data back to the queue for a later round
+    const cellInfo = state.game.rounds[round].cols[col].cards[row];
+    state.game.missedQueue.push({
+      categoryIdx: cellInfo.categoryIdx,
+      cardIdx: cellInfo.cardIdx,
+      revealedDetailIndices: cellInfo.revealedDetailIndices,
+      blankedDetails: cellInfo.blankedDetails,
+    });
+    undoAction.pushedToMissedQueue = true;
+  }
+  state.game.usedCells[cellKey(round, col, row)] = true;
+  state.game.currentCell = null;
+  // Record undo (capped at 20 — older actions are lost)
+  state.game.undoStack.push(undoAction);
+  if (state.game.undoStack.length > 20) state.game.undoStack.shift();
+  saveProgress();
+  showScreen('game-screen');
+  renderGame();
+}
+
+function undoLastAward() {
+  const action = state.game.undoStack.pop();
+  if (!action) return;
+  // Reverse the award
+  if (action.playerIdx >= 0) {
+    state.game.scores[action.playerIdx] -= action.pointsAwarded;
+  }
+  // Reverse the missed-queue push (only the most recent entry)
+  if (action.pushedToMissedQueue && state.game.missedQueue.length > 0) {
+    state.game.missedQueue.pop();
+  }
+  // Mark cell as unused again
+  delete state.game.usedCells[cellKey(action.round, action.col, action.row)];
+  saveProgress();
+  // If we're somehow on the card view, return to the board
+  if (!$('card-view').hidden) showScreen('game-screen');
+  renderGame();
+}
+
+// ============================================================
+// END GAME
+// ============================================================
+function endGame() {
+  // Show end-of-game modal
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  const standings = [];
+  for (let i = 0; i < 5; i++) {
+    if (!state.config.activePlayers[i]) continue;
+    const name = state.config.playerNames[i].trim() || `P${i + 1}`;
+    standings.push({ name, score: state.game.scores[i], idx: i });
+  }
+  standings.sort((a, b) => b.score - a.score);
+  const topScore = standings.length ? standings[0].score : 0;
+
+  const listHTML = standings.map(s => `
+    <li class="${s.score === topScore && topScore > 0 ? 'winner' : ''}">
+      <span class="wname">${escapeHTML(s.name)}</span>
+      <span class="wscore">${s.score}</span>
+    </li>
+  `).join('');
+
+  const missedCount = state.game.missedQueue.length;
+  const missedHTML = (state.config.recycleMissed && missedCount > 0)
+    ? `<p style="color: var(--text-dim); font-style: italic; font-size: 16px;">♻ ${missedCount} card${missedCount === 1 ? '' : 's'} still in the missed queue — these never came back around.</p>`
+    : '';
+
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>Game Over</h2>
+      <ul class="winner-list">${listHTML}</ul>
+      ${missedHTML}
+      <div class="modal-actions">
+        <button class="primary-btn" id="modal-new-game">New Game</button>
+        <button class="secondary-btn" id="modal-back-setup">Back to Setup</button>
+        <button class="secondary-btn" id="modal-cancel">Keep Playing</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  $('modal-new-game').addEventListener('click', () => {
+    overlay.remove();
+    state.game.scores = [0, 0, 0, 0, 0];
+    state.game.usedCells = {};
+    state.game.missedQueue = [];
+    state.game.undoStack = [];
+    generateRounds();
+    state.game.currentRound = 0;
+    saveProgress();
+    showScreen('game-screen');
+    renderGame();
+  });
+  $('modal-back-setup').addEventListener('click', () => {
+    overlay.remove();
+    clearProgress();
+    showScreen('setup-screen');
+  });
+  $('modal-cancel').addEventListener('click', () => overlay.remove());
+}
+
+// ============================================================
+// HOST CHEAT SHEET
+// ============================================================
+function buildCheatSheetHTML() {
+  const rounds = state.game.rounds;
+  let body = '';
+  rounds.forEach((round, ri) => {
+    body += `<h2 class="round-h">Round ${ri + 1}</h2>`;
+    round.cols.forEach((col) => {
+      const headerName = col.isMissedColumn
+        ? '♻ Missed Cards'
+        : state.deck.categories[col.categoryIdx].name;
+      body += `<section class="cs-cat${col.isMissedColumn ? ' cs-missed' : ''}"><h3>${escapeHTML(headerName)}</h3>`;
+      col.cards.forEach((cellInfo, idx) => {
+        const cardCat = state.deck.categories[cellInfo.categoryIdx];
+        const card = cardCat.cards[cellInfo.cardIdx];
+        const detailsList = card.details.map(d => `<li>${escapeHTML(d)}</li>`).join('');
+        // In missed columns, prefix with the source category for clarity
+        const titleDisplay = col.isMissedColumn
+          ? `<span class="cs-src">[${escapeHTML(cardCat.name)}]</span> ${escapeHTML(card.title)}`
+          : escapeHTML(card.title);
+        body += `
+          <div class="cs-card">
+            <div class="cs-card-num">Card ${idx + 1}</div>
+            <div class="cs-card-title">${titleDisplay}</div>
+            ${detailsList ? `<ul>${detailsList}</ul>` : ''}
+          </div>`;
+      });
+      body += `</section>`;
+    });
+  });
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>Host Cheat Sheet — ${escapeHTML(state.deck.deck_name)}</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, 'Times New Roman', serif; max-width: 880px; margin: 24px auto; padding: 0 24px; color: #111; line-height: 1.45; }
+  h1 { font-size: 28px; border-bottom: 3px solid #c89a2f; padding-bottom: 8px; margin-bottom: 4px; }
+  .deck-meta { color: #666; font-style: italic; margin-bottom: 24px; }
+  h2.round-h { font-size: 22px; background: #14245a; color: #f4c542; padding: 8px 14px; margin: 28px 0 14px; page-break-before: always; }
+  h2.round-h:first-of-type { page-break-before: auto; }
+  .cs-cat { margin-bottom: 22px; page-break-inside: avoid; }
+  .cs-cat h3 { font-size: 18px; color: #14245a; border-bottom: 1px solid #c89a2f; padding-bottom: 4px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .cs-missed h3 { color: #8a2d2d; border-bottom-color: #8a2d2d; }
+  .cs-src { color: #8a2d2d; font-size: 14px; font-style: italic; font-weight: normal; }
+  .cs-card { padding: 8px 0 12px; border-bottom: 1px dashed #ddd; page-break-inside: avoid; }
+  .cs-card-num { font-size: 12px; color: #c89a2f; text-transform: uppercase; letter-spacing: 0.08em; }
+  .cs-card-title { font-weight: bold; font-size: 16px; margin: 4px 0 6px; }
+  .cs-card ul { padding-left: 22px; }
+  .cs-card li { margin-bottom: 2px; }
+  @media print { body { margin: 0; padding: 12px; } .no-print { display: none; } }
+  .actions { position: sticky; top: 0; background: white; padding: 8px 0; border-bottom: 1px solid #ddd; }
+  .actions button { font: inherit; padding: 6px 14px; cursor: pointer; }
+</style>
+</head><body>
+<div class="actions no-print"><button onclick="window.print()">Print</button> <button onclick="window.close()">Close</button></div>
+<h1>${escapeHTML(state.deck.deck_name)} — Host Cheat Sheet</h1>
+<div class="deck-meta">${escapeHTML(state.deck.description || '')}</div>
+${body}
+</body></html>`;
+}
+
+function openCheatSheet() {
+  if (state.game.rounds.length === 0) return;
+  const html = buildCheatSheetHTML();
+  const w = window.open('', '_blank');
+  if (!w) {
+    alert('Pop-up blocked. Please allow pop-ups for this page to open the cheat sheet.');
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+}
+
+// ============================================================
+// EVENT WIRING & INIT
+// ============================================================
+function downloadSampleDeck() {
+  const json = JSON.stringify(SAMPLE_DECK, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sample_deck.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// Strip markdown code fences from a pasted block. AI chatbots often wrap JSON
+// in ```json ... ``` even when told not to.
+function stripCodeFences(text) {
+  const trimmed = text.trim();
+  const fenceMatch = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/);
+  if (fenceMatch) return fenceMatch[1].trim();
+  // Sometimes only opening fence and no closing — strip it
+  const openOnly = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*)$/);
+  if (openOnly) return openOnly[1].replace(/```\s*$/, '').trim();
+  return trimmed;
+}
+
+function showPasteDeckModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal modal-wide">
+      <div class="modal-wide-body">
+        <h2>Paste Deck JSON</h2>
+        <p>Paste the JSON output from an AI chatbot below. Code fences (<code>\`\`\`json</code>) will be stripped automatically — just paste the whole response.</p>
+        <textarea id="paste-deck-textarea" placeholder='{"schema_version": 1, "deck_name": "...", ...}'
+          style="width: 100%; min-height: 280px; background: var(--bg-deep); color: var(--cream);
+            border: 1px solid var(--gold-dim); padding: 12px; font-family: ui-monospace, Menlo, Consolas, monospace;
+            font-size: 13px; line-height: 1.5; resize: vertical;"></textarea>
+        <p id="paste-deck-error" style="color: var(--danger); font-style: italic; margin-top: 8px; min-height: 20px;"></p>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="cancel-paste-deck">Cancel</button>
+        <button class="primary-btn" id="confirm-paste-deck">Load This Deck</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  const textarea = $('paste-deck-textarea');
+  textarea.focus();
+
+  $('confirm-paste-deck').addEventListener('click', () => {
+    const text = textarea.value.trim();
+    if (!text) {
+      $('paste-deck-error').textContent = 'Paste some JSON first.';
+      return;
+    }
+    const cleaned = stripCodeFences(text);
+    // We can't use loadDeckFromText directly because we want errors in the modal,
+    // not on the setup screen — so we duplicate a small bit of validation logic.
+    let d;
+    try {
+      d = JSON.parse(cleaned);
+    } catch (err) {
+      $('paste-deck-error').textContent = 'Could not parse JSON: ' + err.message;
+      return;
+    }
+    const errors = validateDeck(d);
+    if (errors.length) {
+      $('paste-deck-error').textContent = 'Invalid deck: ' + errors.slice(0, 2).join(' ');
+      return;
+    }
+    // Success — install the deck and close the modal
+    state.deck = d;
+    state.config.selectedCategoryIndices = d.categories.map((_, i) => i);
+    onDeckLoaded();
+    overlay.remove();
+  });
+
+  $('cancel-paste-deck').addEventListener('click', () => overlay.remove());
+  // Click outside the modal to close
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function showAiPromptModal() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `
+    <div class="modal modal-wide">
+      <div class="modal-wide-body">
+        <h2>Make a Deck with AI</h2>
+        <p>Don't have a deck yet? You can paste this prompt into any AI chatbot (ChatGPT, Claude, Gemini, etc.) along with your study notes, and it will produce a deck file for you.</p>
+
+        <h3>How to use it</h3>
+        <ol>
+          <li>Click the Copy button below to copy the prompt.</li>
+          <li>Open your favorite AI chatbot in another tab.</li>
+          <li>Paste the prompt into the chat.</li>
+          <li>At the very end of the prompt (after the <code>---</code> line), paste your study notes — anything from class notes, textbook chapters, slide text, transcripts, or even a long article.</li>
+          <li>Send the message. The AI will respond with JSON.</li>
+          <li>Copy the AI's full response, save it to a file ending in <code>.json</code> (e.g. <code>my_deck.json</code>) using any text editor.</li>
+          <li>Come back here and use "Load my deck" to load that file.</li>
+        </ol>
+
+        <h3>Tips for best results</h3>
+        <ul>
+          <li>The cleaner your notes, the better the deck. Bullet-point notes tend to work very well.</li>
+          <li>Aim for at least a few hundred words of source material — more material means more cards.</li>
+          <li>If the AI wraps its response in <code>\`\`\`json ... \`\`\`</code> code fences, remove those before saving — the file should start with <code>{</code> and end with <code>}</code>.</li>
+          <li>If the resulting deck has weird categories or bad cards, just ask the AI to fix specific things in a follow-up. Or open the JSON file and edit it directly — it's a plain text file.</li>
+        </ul>
+
+        <h3>The prompt</h3>
+        <div class="copy-prompt-row">
+          <button class="primary-btn" id="copy-prompt-btn">Copy Prompt</button>
+          <span class="copy-status" id="copy-status"></span>
+        </div>
+        <div class="modal-prompt-box" id="prompt-box">${escapeHTML(DECK_GENERATION_PROMPT)}</div>
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-btn" id="close-ai-modal">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  $('copy-prompt-btn').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(DECK_GENERATION_PROMPT);
+      $('copy-status').textContent = '✓ Copied to clipboard';
+      setTimeout(() => { $('copy-status').textContent = ''; }, 2500);
+    } catch (err) {
+      // Fallback: select the text in the box so user can manually copy
+      const range = document.createRange();
+      range.selectNodeContents($('prompt-box'));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      $('copy-status').textContent = 'Selected — press Ctrl+C / Cmd+C to copy';
+    }
+  });
+  $('close-ai-modal').addEventListener('click', () => overlay.remove());
+  // Click outside the modal to close
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.remove();
+  });
+}
+
+function init() {
+  $('deck-file').addEventListener('change', handleDeckFile);
+  $('paste-deck-btn').addEventListener('click', showPasteDeckModal);
+  $('download-sample-btn').addEventListener('click', downloadSampleDeck);
+  $('show-ai-prompt-btn').addEventListener('click', showAiPromptModal);
+
+  $('select-all-btn').addEventListener('click', () => {
+    state.config.selectedCategoryIndices = state.deck.categories.map((_, i) => i);
+    renderCategoryList();
+    invalidateRounds();
+  });
+  $('select-none-btn').addEventListener('click', () => {
+    state.config.selectedCategoryIndices = [];
+    renderCategoryList();
+    invalidateRounds();
+  });
+
+  // Invalidate generated rounds when round-affecting settings change
+  ['num-rounds', 'max-cols', 'max-rows'].forEach(id => {
+    $(id).addEventListener('input', invalidateRounds);
+    $(id).addEventListener('change', invalidateRounds);
+  });
+
+  // Front-mode also toggles the blank-amount slider visibility
+  $('front-mode').addEventListener('change', () => {
+    $('blank-amount-row').hidden = ($('front-mode').value !== 'blanks');
+    invalidateRounds();
+  });
+
+  // Blank-amount slider: live-update the displayed percentage and invalidate rounds
+  $('blank-amount').addEventListener('input', () => {
+    $('blank-amount-value').textContent = $('blank-amount').value + '%';
+    invalidateRounds();
+  });
+
+  $('start-game-btn').addEventListener('click', startGame);
+  $('cheat-sheet-setup-btn').addEventListener('click', openCheatSheetFromSetup);
+  $('cheat-sheet-game-btn').addEventListener('click', openCheatSheet);
+  $('next-round-btn').addEventListener('click', nextRound);
+  $('end-game-btn').addEventListener('click', endGame);
+  $('undo-btn').addEventListener('click', undoLastAward);
+
+  // Global keyboard shortcuts (handled differently per visible screen)
+  document.addEventListener('keydown', handleKeydown);
+
+  // Offer to resume if there's a saved game
+  maybeOfferResume();
+}
+
+function invalidateRounds() {
+  state.game.roundsValid = false;
+}
+
+// ============================================================
+// KEYBOARD SHORTCUTS
+// ============================================================
+//   On the card view (front, before flip):
+//     Space / Enter  → Flip to answer
+//     Escape         → Back to board
+//   On the card view (back, after flip):
+//     1-5            → Award points to that player (if active)
+//     0              → No Points
+//     Escape         → Back to board (same as Back button)
+//   On the game board:
+//     Ctrl+Z / Cmd+Z → Undo last award
+//     N              → Next round (if available)
+//     C              → Open cheat sheet
+//   We don't handle keys when the user is typing in inputs/textareas.
+function handleKeydown(e) {
+  // Don't hijack typing in form fields
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.target.isContentEditable) return;
+  // Don't hijack when modals are showing (resume, end-game, AI prompt, etc.)
+  if (document.querySelector('.modal-overlay')) return;
+
+  // CARD VIEW
+  if (!$('card-view').hidden) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      backToBoard();
+      return;
+    }
+    if (!state.game.cardFlipped) {
+      // Front of card: flip
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        flipCard();
+      }
+    } else {
+      // Back of card: award points
+      if (e.key >= '1' && e.key <= '5') {
+        const idx = parseInt(e.key, 10) - 1;
+        if (state.config.activePlayers[idx]) {
+          e.preventDefault();
+          awardPoints(idx);
+        }
+      } else if (e.key === '0') {
+        e.preventDefault();
+        awardPoints(-1);
+      }
+    }
+    return;
+  }
+
+  // GAME BOARD
+  if (!$('game-screen').hidden) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+      if (state.game.undoStack.length > 0) {
+        e.preventDefault();
+        undoLastAward();
+      }
+      return;
+    }
+    if (e.key === 'n' || e.key === 'N') {
+      if (state.game.currentRound < state.game.rounds.length - 1) {
+        e.preventDefault();
+        nextRound();
+      }
+    } else if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      openCheatSheet();
+    }
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Photo to Text</title>
+  <style>
+    :root {
+      --bg: #f4f4f5;
+      --card: #ffffff;
+      --muted: #71717a;
+      --text: #18181b;
+      --line: #e4e4e7;
+      --soft: #fafafa;
+      --accent: #111827;
+      --accent-2: #27272a;
+      --green-bg: #ecfdf5;
+      --green-text: #047857;
+      --green-line: #a7f3d0;
+      --blue-bg: #eff6ff;
+      --blue-text: #1d4ed8;
+      --blue-line: #bfdbfe;
+      --red-bg: #fef2f2;
+      --red-text: #b91c1c;
+      --red-line: #fecaca;
+      --amber-bg: #fffbeb;
+      --amber-text: #92400e;
+      --amber-line: #fde68a;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--soft);
+      color: #3f3f46;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    .sub {
+      color: var(--muted);
+      max-width: 920px;
+      margin-top: 10px;
+      font-size: 15px;
+    }
+
+    .top-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1.3fr 1fr;
+      margin-top: 22px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      background: var(--card);
+    }
+
+    .box-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #3f3f46;
+    }
+
+    .dropzone {
+      min-height: 190px;
+      border: 2px dashed #d4d4d8;
+      border-radius: var(--radius-lg);
+      background: var(--soft);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+
+    .dropzone.dragging {
+      border-color: #111827;
+      background: white;
+    }
+
+    .drop-main {
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 4px;
+    }
+
+    .drop-sub {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    label {
+      display: block;
+    }
+
+    .label-text {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #3f3f46;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid #d4d4d8;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 150ms ease, box-shadow 150ms ease;
+    }
+
+    textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.08);
+    }
+
+    .full {
+      grid-column: 1 / -1;
+    }
+
+    .help {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .warning {
+      margin-top: 12px;
+      border: 1px solid var(--amber-line);
+      background: var(--amber-bg);
+      color: var(--amber-text);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--soft);
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      margin-top: 4px;
+      letter-spacing: -0.03em;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 1px solid #d4d4d8;
+      background: white;
+      color: var(--text);
+      border-radius: 16px;
+      padding: 11px 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+
+    .btn:hover { background: var(--soft); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover { background: var(--accent-2); }
+
+    .empty {
+      padding: 60px 24px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .pages {
+      display: grid;
+      gap: 22px;
+    }
+
+    .page {
+      overflow: hidden;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: 780px;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: var(--soft);
+      padding: 18px;
+    }
+
+    .page-tag {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .page-name {
+      margin-top: 6px;
+      font-size: 15px;
+      font-weight: 800;
+      word-break: break-word;
+    }
+
+    .page-size {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .preview {
+      width: 100%;
+      aspect-ratio: 3 / 4;
+      margin-top: 16px;
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      object-fit: cover;
+      background: white;
+    }
+
+    .page-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .content {
+      padding: 20px;
+    }
+
+    .content-top {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .content-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .content-sub {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--line);
+    }
+
+    .badge.idle { background: #f4f4f5; color: #52525b; }
+    .badge.running { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-line); }
+    .badge.done { background: var(--green-bg); color: var(--green-text); border-color: var(--green-line); }
+    .badge.error { background: var(--red-bg); color: var(--red-text); border-color: var(--red-line); }
+
+    .error {
+      border: 1px solid var(--red-line);
+      background: var(--red-bg);
+      color: var(--red-text);
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-size: 13px;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .text-output {
+      width: 100%;
+      min-height: 690px;
+      border-radius: 18px;
+      border: 1px solid #d4d4d8;
+      padding: 16px;
+      background: white;
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+      z-index: 50;
+    }
+
+    .toast.show { opacity: 1; }
+
+    .muted-note {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 1050px) {
+      .top-grid,
+      .page-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .app { padding: 14px; }
+      .hero { padding: 16px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+      .page-actions { grid-template-columns: 1fr; }
+      .toolbar { flex-direction: column; }
+      .toolbar .btn { width: 100%; }
+    }
+
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+      .app { max-width: none; padding: 0; }
+      .panel { box-shadow: none; border-radius: 0; }
+      .page {
+        break-after: page;
+        page-break-after: always;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      .page-grid {
+        grid-template-columns: 280px 1fr;
+        min-height: auto;
+      }
+      .text-output {
+        border: 1px solid #ddd;
+        min-height: 880px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="panel hero no-print">
+      <div class="chip">Batch Photo → Text</div>
+      <h1>Open one HTML file and process a whole batch of images</h1>
+      <div class="sub">
+        Upload multiple photos, paste your own API key, choose the AI provider and model,
+        and get one editable text page per image. You can then copy, download, print, or save the result as PDF.
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-label">Images</div><div class="stat-value" id="stat-total">0</div></div>
+        <div class="stat"><div class="stat-label">Done</div><div class="stat-value" id="stat-done">0</div></div>
+        <div class="stat"><div class="stat-label">Queued</div><div class="stat-value" id="stat-queued">0</div></div>
+        <div class="stat"><div class="stat-label">Failed</div><div class="stat-value" id="stat-failed">0</div></div>
+      </div>
+
+      <div class="top-grid">
+        <div class="box">
+          <div class="box-title">Upload images</div>
+          <div class="dropzone" id="dropzone">
+            <div>
+              <div class="drop-main">Drop photos here or click to browse</div>
+              <div class="drop-sub">PNG, JPG, WEBP, GIF, BMP, and HEIC if your browser can open it</div>
+            </div>
+          </div>
+          <input id="file-input" type="file" accept="image/*" multiple class="hidden" />
+          <div class="muted-note">This is a standalone HTML file. You can save it anywhere and open it directly in your browser.</div>
+        </div>
+
+        <div class="box">
+          <div class="box-title">Provider settings</div>
+          <div class="form-grid">
+            <label>
+              <span class="label-text">Provider</span>
+              <select id="provider">
+                <option value="openai">OpenAI</option>
+                <option value="anthropic">Anthropic</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="compatible">OpenAI-compatible</option>
+              </select>
+            </label>
+
+            <label>
+              <span class="label-text">Model</span>
+              <input id="model" type="text" placeholder="Enter model name" />
+            </label>
+
+            <label id="base-url-wrap" class="full hidden">
+              <span class="label-text">Compatible base URL</span>
+              <input id="base-url" type="text" placeholder="https://your-provider.example/v1" />
+            </label>
+
+            <label class="full">
+              <span class="label-text">Your API key</span>
+              <input id="api-key" type="password" placeholder="Paste your API key here" autocomplete="off" />
+            </label>
+
+            <label class="full">
+              <span class="label-text">OCR / extraction prompt</span>
+              <textarea id="prompt"></textarea>
+            </label>
+          </div>
+
+          <div class="help" id="provider-help"></div>
+          <div class="warning">
+            This keeps your API key only in the page while it is open. It does not save the key to local storage.
+            Some AI providers may block direct browser calls with CORS or require a backend proxy.
+          </div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button class="btn btn-primary" id="run-batch">Process batch</button>
+        <button class="btn" id="copy-all">Copy all text</button>
+        <button class="btn" id="download-md">Download .md</button>
+        <button class="btn" id="convert-to-deck">Convert to Game Deck</button>
+        <button class="btn" id="print-btn">Print / Save PDF</button>
+        <button class="btn" id="clear-all">Clear all</button>
+      </div>
+    </section>
+
+    <section id="results"></section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const PROVIDERS = {
+      openai: {
+        label: 'OpenAI',
+        defaultModel: 'gpt-4.1-mini',
+        help: 'Uses the OpenAI Responses API with image input.'
+      },
+      anthropic: {
+        label: 'Anthropic',
+        defaultModel: 'claude-3-7-sonnet-latest',
+        help: 'Uses the Anthropic Messages API with base64 image input. Browser access may depend on provider rules.'
+      },
+      gemini: {
+        label: 'Google Gemini',
+        defaultModel: 'gemini-2.5-flash',
+        help: 'Uses Gemini generateContent with inline image data.'
+      },
+      compatible: {
+        label: 'OpenAI-compatible',
+        defaultModel: 'gpt-4o-mini',
+        help: 'Uses a standard /chat/completions endpoint. Browser access depends on the endpoint CORS setup.'
+      }
+    };
+
+    const DEFAULT_PROMPT = `Transcribe all visible text from this image.\n\nRules:\n- Preserve the original wording as closely as possible.\n- Keep paragraphs, line breaks, headings, and lists when they are visible.\n- Do not summarize unless text is unreadable.\n- If handwriting is uncertain, mark unclear parts with [unclear].\n- If there is no readable text, return exactly: [No readable text found]`;
+
+    // Prompt for converting extracted text into a Study Game deck JSON file.
+    // Same prompt as shown in the game's "Make a Deck with AI" modal — keeping
+    // them in sync ensures users get consistent output across both tools.
+    const DECK_GENERATION_PROMPT = `You are converting study notes into a JSON deck for a Jeopardy-style flashcard study game.
+
+Output STRICT JSON ONLY — no markdown fences, no commentary before or after. The output must be valid JSON parseable by JSON.parse().
+
+Schema:
+{
+  "schema_version": 1,
+  "deck_name": "<short descriptive name for the deck>",
+  "description": "<one-sentence summary of what's in it>",
+  "categories": [
+    {
+      "name": "<short category name, 1-4 words>",
+      "cards": [
+        {
+          "title": "<the prompt: a topic, term, or question — what's shown to the player on the front>",
+          "details": ["<bullet point>", "<bullet point>", "..."]
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Group the source material into 4-12 categories of related topics. Don't make one giant category.
+- Each category should have 2-10 cards. Aim for similar size across categories where possible.
+- Each card has a title (the prompt — usually a topic name, person, term, concept, or question) and details (the answer — a list of bullet points).
+- Keep titles short and recognizable.
+- Keep each detail bullet short — one fact, one phrase, or one short sentence per bullet. 1-12 bullets per card is ideal. Avoid full paragraphs.
+- Strip URLs, image references, and references to slide numbers.
+- Use the source's own wording where possible — don't paraphrase aggressively.
+- Don't invent facts not in the source.
+- If the source has nested sub-bullets, flatten them into a single details array.
+
+The user's source material follows below. Convert it.
+
+---
+
+`;
+
+    const state = {
+      items: [],
+      isRunning: false,
+      toastTimer: null
+    };
+
+    const els = {
+      provider: document.getElementById('provider'),
+      model: document.getElementById('model'),
+      apiKey: document.getElementById('api-key'),
+      baseUrl: document.getElementById('base-url'),
+      baseUrlWrap: document.getElementById('base-url-wrap'),
+      prompt: document.getElementById('prompt'),
+      providerHelp: document.getElementById('provider-help'),
+      dropzone: document.getElementById('dropzone'),
+      fileInput: document.getElementById('file-input'),
+      runBatch: document.getElementById('run-batch'),
+      copyAll: document.getElementById('copy-all'),
+      downloadMd: document.getElementById('download-md'),
+      convertToDeck: document.getElementById('convert-to-deck'),
+      printBtn: document.getElementById('print-btn'),
+      clearAll: document.getElementById('clear-all'),
+      results: document.getElementById('results'),
+      toast: document.getElementById('toast'),
+      statTotal: document.getElementById('stat-total'),
+      statDone: document.getElementById('stat-done'),
+      statQueued: document.getElementById('stat-queued'),
+      statFailed: document.getElementById('stat-failed')
+    };
+
+    function loadSettings() {
+      const provider = localStorage.getItem('batch_ocr_provider') || 'openai';
+      const model = localStorage.getItem('batch_ocr_model') || PROVIDERS[provider].defaultModel;
+      const baseUrl = localStorage.getItem('batch_ocr_base_url') || '';
+      const prompt = localStorage.getItem('batch_ocr_prompt') || DEFAULT_PROMPT;
+      els.provider.value = provider;
+      els.model.value = model;
+      els.baseUrl.value = baseUrl;
+      els.prompt.value = prompt;
+      syncProviderUI();
+    }
+
+    function saveSettings() {
+      localStorage.setItem('batch_ocr_provider', els.provider.value);
+      localStorage.setItem('batch_ocr_model', els.model.value.trim());
+      localStorage.setItem('batch_ocr_base_url', els.baseUrl.value.trim());
+      localStorage.setItem('batch_ocr_prompt', els.prompt.value);
+    }
+
+    function syncProviderUI(resetModel = false) {
+      const provider = els.provider.value;
+      els.providerHelp.textContent = PROVIDERS[provider].help;
+      els.baseUrlWrap.classList.toggle('hidden', provider !== 'compatible');
+      if (resetModel || !els.model.value.trim()) {
+        els.model.value = PROVIDERS[provider].defaultModel;
+      }
+      saveSettings();
+    }
+
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add('show');
+      clearTimeout(state.toastTimer);
+      state.toastTimer = setTimeout(() => {
+        els.toast.classList.remove('show');
+      }, 2200);
+    }
+
+    function humanSize(bytes) {
+      const units = ['B', 'KB', 'MB', 'GB'];
+      let size = bytes || 0;
+      let unit = 0;
+      while (size >= 1024 && unit < units.length - 1) {
+        size /= 1024;
+        unit += 1;
+      }
+      return `${size.toFixed(size >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
+    }
+
+    function slugify(name) {
+      return (name || 'page')
+        .toLowerCase()
+        .replace(/\.[^.]+$/, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 60) || 'page';
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getStats() {
+      const total = state.items.length;
+      const done = state.items.filter(item => item.status === 'done').length;
+      const failed = state.items.filter(item => item.status === 'error').length;
+      const queued = state.items.filter(item => item.status === 'idle').length;
+      return { total, done, failed, queued };
+    }
+
+    function renderStats() {
+      const stats = getStats();
+      els.statTotal.textContent = stats.total;
+      els.statDone.textContent = stats.done;
+      els.statQueued.textContent = stats.queued;
+      els.statFailed.textContent = stats.failed;
+    }
+
+    function render() {
+      renderStats();
+
+      if (!state.items.length) {
+        els.results.innerHTML = `
+          <section class="panel empty">
+            <div style="font-size:18px;font-weight:800;color:#27272a;">No images yet</div>
+            <div style="margin-top:6px;">Upload a batch of pictures to create one text page per image.</div>
+          </section>
+        `;
+        return;
+      }
+
+      els.results.innerHTML = `<div class="pages">${state.items.map((item, index) => pageMarkup(item, index)).join('')}</div>`;
+
+      state.items.forEach((item) => {
+        const textarea = document.getElementById(`text-${item.id}`);
+        const rerunBtn = document.getElementById(`rerun-${item.id}`);
+        const removeBtn = document.getElementById(`remove-${item.id}`);
+        const copyBtn = document.getElementById(`copy-${item.id}`);
+        const downloadBtn = document.getElementById(`download-${item.id}`);
+
+        textarea.addEventListener('input', (event) => {
+          item.text = event.target.value;
+        });
+
+        rerunBtn.addEventListener('click', async () => {
+          await rerunSingle(item.id);
+        });
+
+        removeBtn.addEventListener('click', () => {
+          removeItem(item.id);
+        });
+
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(item.text || '');
+            showToast(`Copied ${item.name}`);
+          } catch {
+            showToast('Copy failed in this browser.');
+          }
+        });
+
+        downloadBtn.addEventListener('click', () => {
+          downloadTextFile(`${slugify(item.name)}.txt`, item.text || '');
+        });
+      });
+    }
+
+    function pageMarkup(item, index) {
+      return `
+        <section class="panel page">
+          <div class="page-grid">
+            <aside class="sidebar">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+                <div>
+                  <div class="page-tag">Page ${index + 1}</div>
+                  <div class="page-name">${escapeHtml(item.name)}</div>
+                  <div class="page-size">${humanSize(item.size)}</div>
+                </div>
+                <div class="badge ${item.status}">${statusLabel(item.status)}</div>
+              </div>
+              <img class="preview" src="${item.previewUrl}" alt="${escapeHtml(item.name)}" />
+              <div class="page-actions no-print">
+                <button class="btn" id="rerun-${item.id}" ${state.isRunning ? 'disabled' : ''}>Run</button>
+                <button class="btn" id="remove-${item.id}">Remove</button>
+              </div>
+            </aside>
+            <div class="content">
+              <div class="content-top no-print">
+                <div>
+                  <div class="content-title">Extracted text</div>
+                  <div class="content-sub">Edit the result before copying, printing, or downloading.</div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                  <button class="btn" id="copy-${item.id}">Copy page</button>
+                  <button class="btn" id="download-${item.id}">Download .txt</button>
+                </div>
+              </div>
+              ${item.error ? `<div class="error">${escapeHtml(item.error)}</div>` : ''}
+              <textarea id="text-${item.id}" class="text-output" placeholder="${item.status === 'running' ? 'Processing image...' : 'Your extracted text will appear here.'}">${escapeHtml(item.text || '')}</textarea>
+            </div>
+          </div>
+        </section>
+      `;
+    }
+
+    function statusLabel(status) {
+      return {
+        idle: 'Queued',
+        running: 'Running',
+        done: 'Done',
+        error: 'Failed'
+      }[status] || status;
+    }
+
+    function addFiles(fileList) {
+      const files = Array.from(fileList || []).filter(file => file.type.startsWith('image/'));
+      if (!files.length) {
+        showToast('No image files found.');
+        return;
+      }
+
+      const next = files.map((file, index) => ({
+        id: `${Date.now()}-${index}-${Math.random().toString(36).slice(2, 9)}`,
+        file,
+        name: file.name,
+        size: file.size,
+        previewUrl: URL.createObjectURL(file),
+        status: 'idle',
+        text: '',
+        error: ''
+      }));
+
+      state.items.push(...next);
+      render();
+    }
+
+    function removeItem(id) {
+      const item = state.items.find(entry => entry.id === id);
+      if (item?.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      state.items = state.items.filter(entry => entry.id !== id);
+      render();
+    }
+
+    function clearAllItems() {
+      state.items.forEach(item => {
+        if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+      });
+      state.items = [];
+      render();
+    }
+
+    function updateItem(id, patch) {
+      const item = state.items.find(entry => entry.id === id);
+      if (!item) return;
+      Object.assign(item, patch);
+      render();
+    }
+
+    function readFileAsDataUrl(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function dataUrlToBase64(dataUrl) {
+      return String(dataUrl).split(',')[1] || '';
+    }
+
+    function extractOpenAI(json) {
+      if (typeof json?.output_text === 'string' && json.output_text.trim()) return json.output_text.trim();
+      const blocks = [];
+      for (const item of json?.output || []) {
+        for (const content of item?.content || []) {
+          if (typeof content?.text === 'string') blocks.push(content.text);
+          if (content?.type === 'output_text' && typeof content?.text === 'string') blocks.push(content.text);
+        }
+      }
+      return blocks.join('\n\n').trim();
+    }
+
+    function extractAnthropic(json) {
+      return (json?.content || [])
+        .filter(part => part?.type === 'text' && typeof part?.text === 'string')
+        .map(part => part.text.trim())
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
+    }
+
+    function extractGemini(json) {
+      return (json?.candidates?.[0]?.content?.parts || [])
+        .map(part => part?.text)
+        .filter(Boolean)
+        .join('\n\n')
+        .trim();
+    }
+
+    function extractCompatible(json) {
+      const content = json?.choices?.[0]?.message?.content;
+      if (typeof content === 'string') return content.trim();
+      if (Array.isArray(content)) {
+        return content.map(part => typeof part?.text === 'string' ? part.text : '')
+          .filter(Boolean)
+          .join('\n\n')
+          .trim();
+      }
+      return '';
+    }
+
+    async function requestOpenAI({ apiKey, model, prompt, dataUrl }) {
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          input: [{
+            role: 'user',
+            content: [
+              { type: 'input_text', text: prompt },
+              { type: 'input_image', image_url: dataUrl }
+            ]
+          }]
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'OpenAI request failed.');
+      const text = extractOpenAI(json);
+      if (!text) throw new Error('No text returned from OpenAI.');
+      return text;
+    }
+
+    async function requestAnthropic({ apiKey, model, prompt, mimeType, base64 }) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 4096,
+          temperature: 0,
+          messages: [{
+            role: 'user',
+            content: [
+              {
+                type: 'image',
+                source: {
+                  type: 'base64',
+                  media_type: mimeType,
+                  data: base64
+                }
+              },
+              { type: 'text', text: prompt }
+            ]
+          }]
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Anthropic request failed.');
+      const text = extractAnthropic(json);
+      if (!text) throw new Error('No text returned from Anthropic.');
+      return text;
+    }
+
+    async function requestGemini({ apiKey, model, prompt, mimeType, base64 }) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inlineData: { mimeType, data: base64 } }
+            ]
+          }],
+          generationConfig: {
+            temperature: 0
+          }
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Gemini request failed.');
+      const text = extractGemini(json);
+      if (!text) throw new Error('No text returned from Gemini.');
+      return text;
+    }
+
+    async function requestCompatible({ apiKey, model, prompt, dataUrl, baseUrl }) {
+      const normalized = String(baseUrl || '').trim().replace(/\/$/, '');
+      if (!normalized) throw new Error('Enter a base URL for the compatible provider.');
+      const response = await fetch(`${normalized}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'text', text: prompt },
+              { type: 'image_url', image_url: { url: dataUrl } }
+            ]
+          }],
+          temperature: 0
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Compatible provider request failed.');
+      const text = extractCompatible(json);
+      if (!text) throw new Error('No text returned from the compatible provider.');
+      return text;
+    }
+
+    async function transcribeImage({ provider, apiKey, model, prompt, baseUrl, file }) {
+      const dataUrl = await readFileAsDataUrl(file);
+      const base64 = dataUrlToBase64(dataUrl);
+      const mimeType = file.type || 'image/jpeg';
+
+      if (provider === 'openai') return requestOpenAI({ apiKey, model, prompt, dataUrl });
+      if (provider === 'anthropic') return requestAnthropic({ apiKey, model, prompt, mimeType, base64 });
+      if (provider === 'gemini') return requestGemini({ apiKey, model, prompt, mimeType, base64 });
+      if (provider === 'compatible') return requestCompatible({ apiKey, model, prompt, dataUrl, baseUrl });
+      throw new Error('Unsupported provider.');
+    }
+
+    function getSettingsSnapshot() {
+      return {
+        provider: els.provider.value,
+        model: els.model.value.trim(),
+        apiKey: els.apiKey.value.trim(),
+        prompt: els.prompt.value,
+        baseUrl: els.baseUrl.value.trim()
+      };
+    }
+
+    async function runOne(item, snapshot) {
+      updateItem(item.id, { status: 'running', error: '' });
+      try {
+        const text = await transcribeImage({
+          provider: snapshot.provider,
+          apiKey: snapshot.apiKey,
+          model: snapshot.model,
+          prompt: snapshot.prompt,
+          baseUrl: snapshot.baseUrl,
+          file: item.file
+        });
+        updateItem(item.id, { status: 'done', text, error: '' });
+      } catch (error) {
+        updateItem(item.id, {
+          status: 'error',
+          error: error instanceof Error ? error.message : String(error || 'Unknown error')
+        });
+      }
+    }
+
+    async function runBatch() {
+      if (!state.items.length || state.isRunning) return;
+      const snapshot = getSettingsSnapshot();
+      if (!snapshot.apiKey) {
+        showToast('Enter an API key first.');
+        return;
+      }
+      if (snapshot.provider === 'compatible' && !snapshot.baseUrl) {
+        showToast('Enter a base URL for the compatible provider.');
+        return;
+      }
+      if (!snapshot.model) {
+        showToast('Enter a model name first.');
+        return;
+      }
+
+      state.isRunning = true;
+      render();
+      const queue = state.items.filter(item => item.status !== 'done');
+      for (const item of queue) {
+        await runOne(item, snapshot);
+      }
+      state.isRunning = false;
+      render();
+    }
+
+    async function rerunSingle(id) {
+      const item = state.items.find(entry => entry.id === id);
+      if (!item || state.isRunning) return;
+      const snapshot = getSettingsSnapshot();
+      if (!snapshot.apiKey) {
+        showToast('Enter an API key first.');
+        return;
+      }
+      if (snapshot.provider === 'compatible' && !snapshot.baseUrl) {
+        showToast('Enter a base URL for the compatible provider.');
+        return;
+      }
+      if (!snapshot.model) {
+        showToast('Enter a model name first.');
+        return;
+      }
+      await runOne(item, snapshot);
+    }
+
+    async function copyAllText() {
+      const content = state.items
+        .filter(item => item.text && item.text.trim())
+        .map((item, index) => `# Page ${index + 1}: ${item.name}\n\n${item.text}`)
+        .join('\n\n---\n\n');
+
+      if (!content.trim()) {
+        showToast('No extracted text yet.');
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(content);
+        showToast('Copied all text.');
+      } catch {
+        showToast('Copy failed in this browser.');
+      }
+    }
+
+    function downloadTextFile(filename, content) {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadMarkdown() {
+      const content = state.items
+        .filter(item => item.text && item.text.trim())
+        .map((item, index) => `# Page ${index + 1}: ${item.name}\n\n${item.text}`)
+        .join('\n\n---\n\n');
+
+      if (!content.trim()) {
+        showToast('No extracted text yet.');
+        return;
+      }
+
+      downloadTextFile('batch-photo-to-text.md', content);
+    }
+
+    // ============================================================
+    // CONVERT EXTRACTED TEXT TO STUDY GAME DECK
+    // ============================================================
+
+    // Strip markdown code fences from a response string. Models sometimes
+    // wrap JSON in ```json ... ``` even when told not to.
+    function stripCodeFences(text) {
+      const trimmed = text.trim();
+      const fenceMatch = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*?)\s*```$/);
+      if (fenceMatch) return fenceMatch[1].trim();
+      // Sometimes only opening fence and no closing — strip it
+      const openOnly = trimmed.match(/^```(?:json|JSON)?\s*([\s\S]*)$/);
+      if (openOnly) return openOnly[1].replace(/```\s*$/, '').trim();
+      return trimmed;
+    }
+
+    async function requestOpenAIText({ apiKey, model, prompt }) {
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          input: [{ role: 'user', content: [{ type: 'input_text', text: prompt }] }]
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'OpenAI request failed.');
+      const text = extractOpenAI(json);
+      if (!text) throw new Error('No text returned from OpenAI.');
+      return text;
+    }
+
+    async function requestAnthropicText({ apiKey, model, prompt }) {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 8192,
+          temperature: 0,
+          messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }]
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Anthropic request failed.');
+      const text = extractAnthropic(json);
+      if (!text) throw new Error('No text returned from Anthropic.');
+      return text;
+    }
+
+    async function requestGeminiText({ apiKey, model, prompt }) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0 }
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Gemini request failed.');
+      const text = extractGemini(json);
+      if (!text) throw new Error('No text returned from Gemini.');
+      return text;
+    }
+
+    async function requestCompatibleText({ apiKey, model, prompt, baseUrl }) {
+      const normalized = String(baseUrl || '').trim().replace(/\/$/, '');
+      if (!normalized) throw new Error('Enter a base URL for the compatible provider.');
+      const response = await fetch(`${normalized}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0
+        })
+      });
+      const json = await response.json();
+      if (!response.ok) throw new Error(json?.error?.message || 'Compatible provider request failed.');
+      const text = extractCompatible(json);
+      if (!text) throw new Error('No text returned from the compatible provider.');
+      return text;
+    }
+
+    async function generateDeck({ provider, apiKey, model, prompt, baseUrl }) {
+      if (provider === 'openai') return requestOpenAIText({ apiKey, model, prompt });
+      if (provider === 'anthropic') return requestAnthropicText({ apiKey, model, prompt });
+      if (provider === 'gemini') return requestGeminiText({ apiKey, model, prompt });
+      if (provider === 'compatible') return requestCompatibleText({ apiKey, model, prompt, baseUrl });
+      throw new Error('Unsupported provider.');
+    }
+
+    // Same validation logic as the Study Game's validateDeck. Keep these in sync.
+    // If the schema ever evolves, update both files.
+    function validateDeck(d) {
+      const errors = [];
+      if (!d || typeof d !== 'object' || Array.isArray(d)) {
+        errors.push('File is not a JSON object.');
+        return errors;
+      }
+      if (d.schema_version !== 1) errors.push(`schema_version must be 1 (got ${d.schema_version}).`);
+      if (typeof d.deck_name !== 'string' || !d.deck_name.trim()) errors.push('deck_name is required.');
+      if (d.description !== undefined && typeof d.description !== 'string') {
+        errors.push('description, if present, must be a string.');
+      }
+      if (!Array.isArray(d.categories) || d.categories.length === 0) {
+        errors.push('categories must be a non-empty array.');
+      } else {
+        d.categories.forEach((c, i) => {
+          if (!c || typeof c !== 'object') {
+            errors.push(`Category ${i}: must be an object.`);
+            return;
+          }
+          if (!c.name || typeof c.name !== 'string') errors.push(`Category ${i}: name is required and must be a string.`);
+          if (!Array.isArray(c.cards) || c.cards.length === 0) {
+            errors.push(`Category ${i} (${c.name || ''}): cards must be a non-empty array.`);
+          } else {
+            c.cards.forEach((card, j) => {
+              if (!card || typeof card !== 'object') {
+                errors.push(`Category ${i} card ${j}: must be an object.`);
+                return;
+              }
+              if (!card.title || typeof card.title !== 'string') errors.push(`Category ${i} card ${j}: title is required and must be a string.`);
+              if (!Array.isArray(card.details)) {
+                errors.push(`Category ${i} card ${j}: details must be an array.`);
+              } else {
+                card.details.forEach((d, k) => {
+                  if (typeof d !== 'string') {
+                    errors.push(`Category ${i} card ${j} detail ${k}: each detail must be a string.`);
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+      return errors;
+    }
+
+    async function convertToDeck() {
+      const completedItems = state.items.filter(item => item.text && item.text.trim());
+      if (!completedItems.length) {
+        showToast('No extracted text yet. Process the batch first.');
+        return;
+      }
+      if (state.isRunning) {
+        showToast('Wait for the batch to finish first.');
+        return;
+      }
+
+      const snapshot = getSettingsSnapshot();
+      if (!snapshot.apiKey) {
+        showToast('Enter your API key first.');
+        return;
+      }
+      if (snapshot.provider === 'compatible' && !snapshot.baseUrl) {
+        showToast('Enter a base URL for the compatible provider.');
+        return;
+      }
+      if (!snapshot.model) {
+        showToast('Enter a model name first.');
+        return;
+      }
+
+      // Bundle all extracted text into one source document
+      const source = completedItems
+        .map((item, index) => `## Page ${index + 1}: ${item.name}\n\n${item.text}`)
+        .join('\n\n');
+
+      const fullPrompt = DECK_GENERATION_PROMPT + source;
+
+      const originalLabel = els.convertToDeck.textContent;
+      els.convertToDeck.disabled = true;
+      els.convertToDeck.textContent = 'Generating deck…';
+      showToast('Sending text to AI to generate deck…');
+
+      try {
+        const response = await generateDeck({
+          provider: snapshot.provider,
+          apiKey: snapshot.apiKey,
+          model: snapshot.model,
+          prompt: fullPrompt,
+          baseUrl: snapshot.baseUrl
+        });
+
+        // Strip markdown fences if the model added them, then validate JSON
+        const cleaned = stripCodeFences(response);
+        let deck;
+        try {
+          deck = JSON.parse(cleaned);
+        } catch (parseErr) {
+          // Save the raw response so the user can manually fix it
+          downloadTextFile('deck-raw-response.txt', response);
+          throw new Error('AI response was not valid JSON. Saved the raw response as deck-raw-response.txt — you can edit it by hand and rename to .json.');
+        }
+
+        // Auto-fix the most common AI omission: missing schema_version.
+        // Validate AFTER this so otherwise-good decks aren't rejected for it.
+        if (deck && typeof deck === 'object' && !Array.isArray(deck) && deck.schema_version !== 1) {
+          deck.schema_version = 1;
+        }
+
+        // Full validation — matches the Study Game's validateDeck. If this
+        // passes, the deck will load cleanly when dropped into the game.
+        const errors = validateDeck(deck);
+        if (errors.length) {
+          downloadTextFile('deck-raw-response.txt', response);
+          // Show first 2 errors so the toast doesn't get massive
+          const summary = errors.slice(0, 2).join(' ') + (errors.length > 2 ? ` (+${errors.length - 2} more issues)` : '');
+          throw new Error(`AI response is JSON but doesn't match the deck schema: ${summary} — Saved the raw response as deck-raw-response.txt for manual fixing.`);
+        }
+
+        const filename = (deck.deck_name || 'generated_deck')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .slice(0, 60) || 'generated_deck';
+
+        downloadTextFile(`${filename}.json`, JSON.stringify(deck, null, 2));
+        showToast(`Deck saved: ${filename}.json — load it in the study game!`);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : String(err));
+      } finally {
+        els.convertToDeck.disabled = false;
+        els.convertToDeck.textContent = originalLabel;
+      }
+    }
+
+    els.provider.addEventListener('change', () => syncProviderUI(true));
+    els.model.addEventListener('input', saveSettings);
+    els.baseUrl.addEventListener('input', saveSettings);
+    els.prompt.addEventListener('input', saveSettings);
+
+    els.dropzone.addEventListener('click', () => els.fileInput.click());
+    els.fileInput.addEventListener('change', (event) => addFiles(event.target.files));
+
+    ['dragenter', 'dragover'].forEach(type => {
+      els.dropzone.addEventListener(type, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.add('dragging');
+      });
+    });
+
+    ['dragleave', 'dragend', 'drop'].forEach(type => {
+      els.dropzone.addEventListener(type, (event) => {
+        event.preventDefault();
+        els.dropzone.classList.remove('dragging');
+      });
+    });
+
+    els.dropzone.addEventListener('drop', (event) => {
+      addFiles(event.dataTransfer.files);
+    });
+
+    els.runBatch.addEventListener('click', runBatch);
+    els.copyAll.addEventListener('click', copyAllText);
+    els.downloadMd.addEventListener('click', downloadMarkdown);
+    els.convertToDeck.addEventListener('click', convertToDeck);
+    els.printBtn.addEventListener('click', () => window.print());
+    els.clearAll.addEventListener('click', clearAllItems);
+
+    loadSettings();
+    render();
+  </script>
+</body>
+</html>
